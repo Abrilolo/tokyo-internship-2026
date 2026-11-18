@@ -1,0 +1,107 @@
+/* Material rendering and restored DriftWall presentation. */
+#card-materials { position:absolute; inset:0; pointer-events:none; }
+#card-materials canvas { display:block; width:100%; height:100%; }
+#card-space { z-index:1; }
+/* Far half of the card helix: painted beneath the cut-out samurai head. */
+#card-back-layer { position:fixed; inset:0; width:100%; height:100%; z-index:1; pointer-events:none; }
+#dither-veil-container.dither-live { background:none; }
+.webgl-cards .card-face { background:transparent; box-shadow:none; border:0; }
+.webgl-cards .card-front > * { opacity:0!important; }
+.webgl-cards .card-front::before,.webgl-cards .card-front::after { display:none; }
+.webgl-cards .card-back::after { opacity:.08; }
+.project-card { transform-style:preserve-3d; }
+.card-front:focus-visible { outline:2px solid #b86ee0; outline-offset:8px; }
+
+/* Fusuma doors: painted paper panels cropped from the reference photograph,
+   each in a black lacquer frame, sliding between a kamoi beam and a shikii track. */
+#door-stage { --rail:0; --frame:clamp(5px,.55vw,10px); }
+.fusuma {
+  position:relative; flex:1; min-width:0; overflow:hidden; isolation:isolate; contain:layout paint;
+  border:var(--frame) solid #121010; border-top-width:calc(var(--frame) * 1.2); border-bottom-width:calc(var(--frame) * 1.5);
+  background:#efe5d2 center bottom / cover no-repeat;
+  /* Lacquer bevel outside, the frame's shadow falling on the paper inside. */
+  box-shadow:inset 0 0 0 1px #000, inset 3px 4px 9px #2a1a0855, inset -2px -2px 7px #2a1a0833, 0 0 0 1px #2c2724;
+}
+.fusuma-pine-left { background-image:url('photos/bg/fusuma-pine-left.jpg'); }
+.fusuma-cranes { background-image:url('photos/bg/fusuma-cranes.jpg'); }
+.fusuma-pine-right { background-image:url('photos/bg/fusuma-pine-right.jpg'); }
+.fusuma-flip { scale:-1 1; }
+/* Inner panels run in the nearer track and shade the panel behind them. */
+.fusuma-inner { z-index:1; }
+.door-left .fusuma-inner { box-shadow:inset 0 0 0 1px #000, inset 3px 4px 9px #2a1a0855, inset -2px -2px 7px #2a1a0833, 0 0 0 1px #2c2724, -10px 0 22px #0009; }
+.door-right .fusuma-inner { box-shadow:inset 0 0 0 1px #000, inset 3px 4px 9px #2a1a0855, inset -2px -2px 7px #2a1a0833, 0 0 0 1px #2c2724, 10px 0 22px #0009; }
+/* Paper tooth plus soft room light: brighter mid-height, dim toward the beam and floor. */
+.fusuma::before {
+  content:""; position:absolute; inset:0; pointer-events:none; mix-blend-mode:multiply; opacity:.24;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.55 .9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .55  0 0 0 0 .47  0 0 0 0 .36  0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
+}
+.fusuma::after {
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(#1a120a66,#1a120a00 16%,#fff3d60d 45%,#1a120a00 72%,#1a120a59),linear-gradient(90deg,#0000 60%,#1a120a26);
+}
+.door-right .fusuma::after { background:linear-gradient(#1a120a66,#1a120a00 16%,#fff3d60d 45%,#1a120a00 72%,#1a120a59),linear-gradient(270deg,#0000 60%,#1a120a26); }
+.door-rail {
+  position:absolute; left:0; right:0; z-index:3; pointer-events:none;
+  background-color:#7b4f2c;
+  background-image:repeating-linear-gradient(90deg,#0000 0 37px,#3b210f22 37px 38px,#0000 38px 91px,#ffd9a312 91px 93px),linear-gradient(#a06c41,#8a5a33 45%,#6a4324);
+}
+.door-rail-top { top:0; height:clamp(26px,5.2vh,58px); box-shadow:0 10px 22px #000a, inset 0 -3px 0 #3a2413, inset 0 -9px 0 #5d3b20; transform:translateY(calc((var(--rail) - 1) * 130%)); }
+.door-rail-bottom { bottom:0; height:clamp(14px,2.6vh,30px); box-shadow:0 -6px 16px #0008, inset 0 2px 0 #c39562, inset 0 5px 0 #4a2f18; transform:translateY(calc((1 - var(--rail)) * 160%)); }
+
+#room-stage { background:#15130f; }
+/* Three ever-closer Fuji photographs; the script pins each by its summit. */
+.fuji-approach { position:absolute; inset:0; opacity:0; visibility:hidden; }
+.fuji-approach img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; will-change:transform,opacity; }
+#closing { text-shadow:0 2px 34px #000c,0 0 3px #0008; }
+.room-photo { object-fit:cover; object-position:center; will-change:transform; }
+.room-shade { background:#090b0e; opacity:.36; }
+#japan-copy { text-shadow:0 3px 35px #0009; }
+#photo-wall { position:absolute; inset:0; width:100%; height:100%; pointer-events:auto; }
+.drift-wall {
+  --dw-radius:2px; --dw-dim:.88; --dw-overlay:#0b0c12; --dw-edge:56%;
+  --dw-lift:70px; --dw-perspective:1200px;
+}
+.drift-wall__tile { padding:0; border:0; background:none; color:inherit; cursor:zoom-in; }
+.drift-wall__inner {
+  background:#e8dfca; padding:9px 9px 17px; isolation:isolate; contain:layout paint;
+  box-shadow:0 5px 15px #0006,inset 0 0 0 1px #fff5;
+  border-radius:2px 1px 2px 0;
+}
+.drift-wall__inner::after {
+  content:""; position:absolute; inset:0; pointer-events:none; opacity:.15;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='fiber'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7 .12' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23fiber)' opacity='.35'/%3E%3C/svg%3E");
+  mix-blend-mode:multiply;
+}
+.drift-wall__tile img { object-position:50% 32%; }
+.drift-wall__overlay { inset:9px 9px 17px; opacity:.12; }
+.drift-wall__tile.is-active { z-index:2; }
+.drift-wall__tile:focus-visible { outline:none; }
+.photo-heading { top:12vh; left:5vw; z-index:2; pointer-events:none; text-shadow:0 2px 25px #000; }
+.photo-heading>span { font-size:21px; }
+.photo-heading p { font-size:10px; }
+#photo-count { z-index:2; pointer-events:none; bottom:8vh; }
+#photo-stage { background:linear-gradient(#06081033,transparent 24%,transparent 80%,#06081044); }
+@media(max-width:700px) {
+  /* One panel per door keeps the painting legible on a narrow screen. */
+  .fusuma-outer { display:none; }
+  #photo-wall { inset:0; }
+  .drift-wall__inner { padding:6px 6px 12px; }
+  .drift-wall__overlay { inset:6px 6px 12px; }
+  .photo-heading { top:12vh; }
+  .room-photo { object-fit:cover; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .drift-wall__inner { transition:none; }
+}
+
+/* The supplied wave and Fuji doors meet as one continuous painting. */
+#door-stage .door { width:50%; background-image:url('photos/bg/fusuma-wave-fuji-dark.png'); background-size:200% 100%; background-repeat:no-repeat; box-shadow:none; }
+#door-stage .door-left { background-position:left center; }
+#door-stage .door-right { background-position:right center; }
+#door-stage .fusuma, #door-stage .door-rail, #door-stage .door-light { display:none; }
+/* The gallery is unobstructed; only the closing scroll dims the whole wall. */
+#photo-stage { background:#0c0b10; }
+#photo-stage .photo-heading, #photo-count { display:none; }
+#photo-wall { mask-image:none; -webkit-mask-image:none; --dw-dim:1; }
+#photo-wall .drift-wall__overlay, #photo-wall .drift-wall__inner::after { display:none; }
+body.japan-gallery .site-header, body.japan-gallery .grain, body.japan-gallery #scroll-hint, body.japan-gallery #progress { opacity:0!important; pointer-events:none; }

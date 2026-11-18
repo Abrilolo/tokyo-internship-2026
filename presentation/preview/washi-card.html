@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create & Learn · Washi presentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Mono:wght@400;500;700&family=Shippori+Mincho:wght@500;700;800&display=swap" rel="stylesheet">
+  <script src="../scripts/vendor/three-r128.min.js"></script>
+  <script src="../scripts/stories.js"></script>
+  <script src="../scripts/washi-paper.js"></script>
+  <script src="../scripts/experiment-data.js"></script>
+  <script src="../scripts/story-visuals.js"></script>
+  <link rel="stylesheet" href="../story-visuals.css">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+  <script src="../scripts/story-scenes.js"></script>
+  <link rel="stylesheet" href="../story-scenes.css">
+  <style>
+    /* Same tokens as presentation.css */
+    :root{--bg:#120f17;--paper:#f4f1ea;--ink:#171619;--accent:#6F2093;--accent-light:#b86ee0;--muted:#d4cce0;
+      --serif:"Shippori Mincho","Yu Mincho",serif;--sans:"Cormorant Garamond","Shippori Mincho",Georgia,serif;--mono:"IBM Plex Mono","Space Mono",Consolas,monospace}
+    *{box-sizing:border-box}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--muted);font-family:var(--sans)}
+    body::before{content:"";position:fixed;inset:0;pointer-events:none;
+      background:radial-gradient(60% 55% at 50% 46%,rgba(111,32,147,.30),transparent 70%),radial-gradient(circle at 50% 50%,transparent 40%,rgba(6,4,9,.8) 100%)}
+    #stage,#overlay{position:fixed;inset:0}
+    #overlay{perspective:1600px;perspective-origin:50% 50%;pointer-events:none}
+
+    /* Information layer: sits exactly on the front face of the WebGL card */
+    .card-content{position:absolute;left:50%;top:50%;container-type:size;color:var(--ink);transform-style:preserve-3d;
+      backface-visibility:hidden;will-change:transform;pointer-events:auto}
+    .sheet{position:absolute;inset:0;padding:11.6cqh 8.8cqw 10.6cqh;display:grid;grid-template-rows:auto 1fr auto;gap:2.4cqh;
+      transition:opacity .28s ease}
+    .sheet.swap{opacity:0}
+    .head,.foot{margin-inline:3.8cqw} /* clear the kumiko corners */
+    .head{display:flex;justify-content:space-between;align-items:baseline;gap:2cqw;font:500 1.12cqw/1.2 var(--mono);letter-spacing:.16em;text-transform:uppercase}
+    .eyebrow{color:var(--accent);font-weight:700}
+    .eyebrow::before{content:"";display:inline-block;width:2.2cqw;height:.14cqw;min-height:1px;background:var(--accent);vertical-align:middle;margin-right:1cqw}
+    .count{color:rgba(23,22,25,.55);white-space:nowrap}
+    .body{display:grid;grid-template-columns:1.08fr .92fr;gap:4.4cqw;align-items:center;min-height:0}
+    .body.text-only{grid-template-columns:minmax(0,62cqw)}
+    h2{margin:0 0 1.9cqh;font:700 4cqw/1.12 var(--serif);letter-spacing:-.01em;text-wrap:balance}
+    p{margin:0;font:500 2.02cqw/1.42 var(--sans);color:rgba(23,22,25,.86);text-wrap:pretty}
+    .copy a{display:inline-block;margin-top:2.4cqh;font:700 1.08cqw/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;
+      color:var(--accent);text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:.5cqh}
+    .copy a:hover,.copy a:focus-visible{color:var(--ink)}
+    .visual{margin:0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:1.4cqh;text-align:center}
+    .visual img,.visual video{display:block;max-width:100%;max-height:47cqh;object-fit:contain;border:1px solid rgba(23,22,25,.75);
+      border-radius:2px;box-shadow:.5cqw .6cqw 0 rgba(111,32,147,.16)}
+    .visual.phone img{max-height:54cqh}
+    .cap{font:500 1.02cqw/1.45 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:rgba(23,22,25,.62);max-width:34cqw}
+    .stat{font:800 12.5cqw/.95 var(--serif);color:var(--accent);letter-spacing:-.03em}
+    pre.code{margin:0;align-self:stretch;text-align:left;font:500 1.3cqw/1.6 var(--mono);white-space:pre-wrap;color:var(--ink);
+      padding:2.6cqh 2cqw;border-left:.3cqw solid var(--accent);background:rgba(111,32,147,.07)}
+    .foot{font:500 1.05cqw/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:rgba(23,22,25,.6);padding-right:16cqw}
+
+    /* Preview-only controls */
+    .bar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:6px;
+      padding:6px;border:1px solid rgba(184,110,224,.28);border-radius:999px;background:rgba(18,15,23,.78);backdrop-filter:blur(8px)}
+    .bar button{font:500 12px/1 var(--mono);letter-spacing:.08em;color:var(--muted);background:none;border:0;border-radius:999px;
+      padding:9px 13px;cursor:pointer;white-space:nowrap}
+    .bar button:hover{color:#fff}
+    .bar button:focus-visible{outline:2px solid var(--accent-light);outline-offset:1px}
+    .bar button[aria-pressed="true"]{background:var(--accent);color:#fff}
+    .bar .sep{width:1px;height:20px;background:rgba(184,110,224,.28);margin:0 4px}
+    .bar .kanji{font-family:var(--serif);font-size:15px;margin-right:6px}
+    .tag{position:fixed;top:16px;left:18px;z-index:30;font:500 11px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:rgba(212,204,224,.55)}
+    @media (max-width:760px){.bar .name{display:none}.bar .kanji{margin:0}}
+    /* Visual-led story layout inside the existing Washi frame. */
+    .body{grid-template-columns:.7fr 1.3fr;gap:3cqw}
+    h2{font-size:3.15cqw} .copy p{font-size:1.72cqw}
+    .head{font-size:.95cqw;letter-spacing:.05em}.count{max-width:48%;white-space:normal;text-align:right}
+    .sheet{transition:opacity .24s ease,filter .24s ease,clip-path .24s ease;clip-path:inset(0)}
+    .sheet.swap{clip-path:inset(0 0 100% 0)} /* no blur: filtering video/iframes every frame stalls the scroll */
+    .bar{max-width:96vw}.bar button{font-size:10px;padding:9px}.bar .name{display:inline}
+    .tag a{color:inherit;text-decoration:none}
+    @media(max-width:760px){.bar .name{display:none}.sheet{overflow:auto}.body{grid-template-columns:1fr;gap:16px;align-content:start}.sheet{padding:55px 35px;gap:16px}.head{font-size:10px}.copy h2{font-size:24px}.copy p{font-size:17px}.foot{font-size:10px}.media-content img,.media-content video{max-height:230px}.teaching-demo .demo-note{font-size:12px}.bar{bottom:8px}.card-content{background:#f4f1ea;border:double 5px #532168;border-radius:6px}.sheet .head,.sheet .foot{margin:0}.foot{padding:0}}
+    .body{overflow:auto;padding:4px;scrollbar-width:thin;overscroll-behavior:contain}
+    .tag{color:#d4cce0}
+    @media(max-width:760px){.sheet{display:flex;flex-direction:column;padding:28px 22px}.body{flex:none;overflow:visible;padding:0}.foot{margin-top:auto;padding-top:12px}.head{flex-wrap:wrap;gap:8px}.count{max-width:58%}.tag{font-size:9px;letter-spacing:.1em}}
+    @media(max-height:600px) and (min-width:761px){.sheet{padding:40px 60px}.body{align-items:start}.copy h2{font-size:24px}.copy p{font-size:16px}}
+    html,body{height:auto;overflow-x:hidden;overflow-y:auto}
+    #preview-route{width:1px;pointer-events:none}
+    .bar{pointer-events:none}
+    /* Scenes from af85a1e: station header + full-width scene body */
+    /* Frame at margin 26/1440: corners reach ~8cqw / 11cqh, seal sits at 87–95cqh */
+    .sheet.has-scene{padding:4.6cqh 4.2cqw 13.6cqh;grid-template-rows:auto minmax(0,1fr);gap:2cqh}
+    .sheet.has-scene .head{margin-inline:6cqw;align-items:center;min-height:5.4cqh;text-transform:none;letter-spacing:.01em;font-weight:700}
+    .sheet.has-scene .count{white-space:nowrap;max-width:none}
+    .sheet.has-scene .body{display:flex;flex-direction:column;justify-content:center;overflow:visible;padding:0 .6cqw;min-height:0}    @media(max-width:760px){.sheet.has-scene{padding:28px 22px}.sheet.has-scene .head{margin:0}}
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <div id="overlay">
+    <article class="card-content" id="content"><div class="sheet" id="sheet"></div></article>
+  </div>
+  <div class="tag">Create & Learn · Five chapters</div>
+  <nav class="bar" id="bar" aria-label="Presentation chapters"></nav>
+
+<script>
+(() => {
+'use strict';
+const projects = window.PRESENTATION_PROJECTS;
+const TEX_W = 1440, TEX_H = 1024, ASPECT = TEX_W / TEX_H;
+const INK = '#150d1c';                 // sumi with a violet undertone
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const asset = p => /^(https?:|\/)/.test(p) ? p : '../' + p;   // stories.js paths are relative to presentation/
+
+/* ---------- Paper base (rendered once, reused for every project) ---------- */
+const {makePaperBase,drawFace}=window.WashiPaper;
+
+function makeEdgeTexture() {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 128;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#E5DFD2'; ctx.fillRect(0, 0, 256, 128);
+  for (let y = 0; y < 128; y += 3) {
+    ctx.fillStyle = y % 6 === 0 ? 'rgba(170,156,160,.45)' : 'rgba(252,249,242,.5)';
+    ctx.fillRect(0, y, 256, 1.5);
+  }
+  for (let i = 0; i < 600; i++) {
+    ctx.fillStyle = Math.random() > .5 ? 'rgba(150,138,138,.35)' : 'rgba(255,255,255,.4)';
+    ctx.fillRect(Math.random() * 256, Math.random() * 128, 3, 1.5);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(6, 1);
+  return t;
+}
+
+/* ---------- Wet-ink material (same model as scripts/washi-cards.js) ---------- */
+function makeMaterial(colorTex, dataTex) {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      uColorMap: { value: colorTex }, uDataMap: { value: dataTex }, uTime: { value: 0 },
+      uLightPos: { value: new THREE.Vector3(1.5, 2, 4.5) }, uHover: { value: 0 }, uUnit: { value: 1 }
+    },
+    vertexShader: `
+      varying vec2 vUv; varying vec3 vNormalWorld; varying vec3 vWorldPos;
+      void main() {
+        vUv = uv;
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vWorldPos = wp.xyz;
+        vNormalWorld = normalize(mat3(modelMatrix) * normal);
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }`,
+    fragmentShader: `
+      uniform sampler2D uColorMap; uniform sampler2D uDataMap;
+      uniform float uTime, uHover, uUnit; uniform vec3 uLightPos;
+      varying vec2 vUv; varying vec3 vNormalWorld; varying vec3 vWorldPos;
+      void main() {
+        vec2 texel = vec2(1.0 / ${TEX_W}.0, 1.0 / ${TEX_H}.0);
+        vec3 wp = vWorldPos / uUnit;               // back to card-sized units
+        float wet = texture2D(uDataMap, vUv).g;
+
+        vec2 ripple = vec2(0.0);
+        if (wet > 0.05) {
+          float phase = uTime * 1.65 + wp.x * 1.4 - wp.y * 1.1;
+          float w1 = sin(vUv.x * 36.0 + phase) + 0.5 * sin(vUv.x * 74.0 - uTime * 2.2);
+          float w2 = cos(vUv.y * 42.0 - phase * 0.85) + 0.5 * cos(vUv.y * 80.0 + uTime * 1.8);
+          ripple = vec2(w1, w2) * 0.00055 * wet;
+        }
+        vec4 albedo = texture2D(uColorMap, vUv + ripple);
+
+        float hL = texture2D(uDataMap, vUv - vec2(texel.x, 0.0)).r;
+        float hR = texture2D(uDataMap, vUv + vec2(texel.x, 0.0)).r;
+        float hD = texture2D(uDataMap, vUv - vec2(0.0, texel.y)).r;
+        float hU = texture2D(uDataMap, vUv + vec2(0.0, texel.y)).r;
+        float bump = mix(1.6, 5.2, wet);
+        float gust = sin(uTime * 0.9 + wp.x * 0.8) * 0.35 + 0.85;
+        float rx = (sin(vUv.y * 68.0 + uTime * 2.4 + vUv.x * 14.0) * 0.065 + cos(vUv.x * 45.0 - uTime * 1.7) * 0.04) * wet * gust;
+        float ry = (cos(vUv.x * 72.0 - uTime * 2.1 + vUv.y * 12.0) * 0.065 + sin(vUv.y * 50.0 + uTime * 1.5) * 0.04) * wet * gust;
+        vec3 ln = normalize(vec3((hL - hR) * bump + rx, (hD - hU) * bump + ry, 1.0));
+        vec3 n = normalize(vNormalWorld + vec3(ln.x, ln.y, 0.0) * 0.65);
+
+        vec3 l = normalize(uLightPos - wp);
+        vec3 v = normalize(cameraPosition / uUnit - wp);
+        vec3 h = normalize(l + v);
+        float diff = max(dot(n, l), 0.0);
+        vec3 paper = albedo.rgb * (0.64 + diff * 0.46);
+        vec3 base = mix(paper, paper * 0.58, wet * 0.65);
+
+        float spec = pow(max(dot(n, h), 0.0), mix(12.0, 145.0, wet));
+        float fres = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+        float refl = (spec * 1.35 + fres * 0.32 * diff) * wet;
+        // Glints carry the accent-light violet of the system
+        vec3 specColor = mix(vec3(0.98, 0.97, 0.94), vec3(0.72, 0.43, 0.88), 0.45) * refl * (1.0 + uHover * 0.25);
+        gl_FragColor = vec4(base + specColor, 1.0);
+      }`
+  });
+}
+
+/* ---------- Information layer ---------- */
+const sheet = document.getElementById('sheet'), content = document.getElementById('content'), bar = document.getElementById('bar');
+let pi = 0, pg = 0, previewPhase=0;
+// Card content comes from the af85a1e scenes when a project has them.
+const SCENES = window.STORY_SCENES || {};
+// Ink border pushed toward the paper edge; seal tucked into the bottom band.
+const FACE_OPTS = { margin: 26, sealInBand: true };
+const pagesOf = project => SCENES[project.id] || project.pages;
+let sceneEnd = 0;
+const sceneList = projects.flatMap((project, i) => pagesOf(project).map((page, j) => {
+  const start = sceneEnd;
+  const beats = page.html ? window.StoryScenes.beatCount(page) : 0;
+  sceneEnd += 1.6 + Math.max(0, beats - 1) * .65;
+  return { i, j, start, end: sceneEnd };
+}));
+
+function sceneMarkup(project, scene, index, total) {
+  return `<header class="head"><span class="sc-station"><span class="kanji">${esc(project.symbol)}</span><span class="dash"></span><span>${scene.label}</span></span><span class="count">${esc(project.title.split(' · ')[0])} · ${String(index + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}</span></header>
+    <div class="body"><div class="scene">${window.StoryScenes.markup(scene, asset)}</div></div>`;
+}
+
+function pageMarkup(project, page, index, total) {
+  if (SCENES[project.id]) return sceneMarkup(project, page, index, total);
+  const visual = window.StoryVisuals.markup(page, asset);
+  const link = page.link ? `<a href="${esc(asset(page.link))}" target="_blank" rel="noopener">${esc(page.linkText)} ↗</a>` : '';
+  return `<header class="head"><span class="eyebrow">${esc(page.label)}</span><span class="count">${esc(project.title)} · ${String(index + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}</span></header>
+    <div class="body ${page.image||page.video?'media-page':''} ${visual ? '' : 'text-only'}"><div class="copy"><h2>${esc(page.title)}</h2><p>${esc(page.text)}</p>${link}</div>${visual}</div>
+    <footer class="foot">${esc(page.footer)}</footer>`;
+}
+let swapTimer = 0;
+function showPage(instant) {
+  const project = projects[pi];
+  sheet.querySelectorAll('video').forEach(v => v.pause());
+  const pages = pagesOf(project);
+  const apply = () => { sheet.innerHTML = pageMarkup(project, pages[pg], pg, pages.length); sheet.classList.toggle('has-scene', !!SCENES[project.id]); if (SCENES[project.id]) window.StoryScenes.mount(sheet, reduced); window.StoryVisuals.mount(sheet); window.StoryVisuals.progress(sheet,previewPhase);window.StoryScenes.progress(sheet,previewPhase,reduced);sheet.classList.remove('swap'); };
+  clearTimeout(swapTimer);
+  if (instant || reduced) apply(); else { sheet.classList.add('swap'); swapTimer = setTimeout(apply, 240); }
+  bar.querySelectorAll('[data-project]').forEach(b => b.setAttribute('aria-current', String(+b.dataset.project === pi)));
+}
+function step(d) {
+  if (window.StoryVisuals.isOpen()) return;
+  const n = pagesOf(projects[pi]).length;
+  pg += d;
+  if (pg >= n) { pi = (pi + 1) % projects.length; pg = 0; setProject(pi, 0); return; }
+  if (pg < 0) { pi = (pi - 1 + projects.length) % projects.length; setProject(pi, pagesOf(projects[pi]).length - 1); return; }
+  showPage();
+}
+bar.innerHTML=projects.map((p,i)=>`<span data-project="${i}"><span class="kanji">${esc(p.symbol)}</span><span class="name">${esc(p.title.split(' · ')[0])}</span></span>`).join('');
+const scrollRoute=document.createElement('main');scrollRoute.id='preview-route';scrollRoute.setAttribute('aria-label','Presentation scroll route');document.body.append(scrollRoute);
+function syncScroll(){
+ if(window.StoryVisuals.isOpen())return;
+ const position = scrollY / innerHeight;
+ const next = sceneList.find(scene => position < scene.end) || sceneList.at(-1);
+ previewPhase = Math.min(.99999, Math.max(0, (position - next.start) / (next.end - next.start)));
+ if(next.i!==pi||next.j!==pg)setProject(next.i,next.j);
+ else { window.StoryVisuals.progress(sheet,previewPhase); window.StoryScenes.progress(sheet,previewPhase,reduced); }
+}
+addEventListener('scroll',syncScroll,{passive:true});
+
+/* ---------- Scene ---------- */
+let renderer, scene, camera, mesh, front, base, face, colorTex, dataTex;
+let W = 1000, H = W / ASPECT, viewW = 1, viewH = 1;
+const mouse = new THREE.Vector2(), target = new THREE.Vector2(), ray = new THREE.Raycaster();
+let hover = 0;
+
+const faceCache = new Map();
+function faceFor(i) {
+  if (!faceCache.has(i)) {
+    const out = { color: document.createElement('canvas'), data: document.createElement('canvas') };
+    out.color.width = out.data.width = TEX_W; out.color.height = out.data.height = TEX_H;
+    drawFace(base, out, projects[i], i, FACE_OPTS);
+    faceCache.set(i, out);
+  }
+  return faceCache.get(i);
+}
+function setProject(i, page) {
+  if(window.StoryVisuals.isOpen()) return;
+  const projectChanged = i !== pi;
+  pi = i; pg = page;
+  // Paper faces are drawn once per project and cached; scenes inside the same
+  // project only swap the DOM copy, never the texture.
+  if (face && projectChanged) { face = faceFor(pi); colorTex.image = face.color; dataTex.image = face.data; colorTex.needsUpdate = dataTex.needsUpdate = true; }
+  showPage();
+}
+function resize() {
+  viewW = innerWidth; viewH = innerHeight;
+  scrollRoute.style.height=((sceneEnd+1)*viewH)+'px';
+  W = Math.min(viewW * .94, (viewH - 140) * ASPECT, 1380); H = W / ASPECT;
+  if(viewW <= 760){W=viewW-40; H=Math.max(240,viewH-145);}
+  renderer.setSize(viewW, viewH);
+  // 1 world unit = 1 CSS px at z = 0, matching the overlay's 1600px perspective
+  camera.aspect = viewW / viewH; camera.fov = 2 * Math.atan(viewH / 3200) * 180 / Math.PI; camera.updateProjectionMatrix();
+  Object.assign(content.style, { width: W + 'px', height: H + 'px', marginLeft: -W / 2 + 'px', marginTop: -H / 2 + 'px' });
+  front.uniforms.uUnit.value = W / 3.85;
+}
+function init() {
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+  document.getElementById('stage').append(renderer.domElement);
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(40, 1, 1, 5000); camera.position.z = 1600;
+  scene.add(new THREE.AmbientLight(0xf4f1ea, .72));
+  const key = new THREE.DirectionalLight(0xfffcf5, .85); key.position.set(4, 6, 8); scene.add(key);
+  const rim = new THREE.DirectionalLight(0xb86ee0, .7); rim.position.set(-5, -3, 4); scene.add(rim);
+
+  base = makePaperBase();
+  face = faceFor(pi);
+  // Warm the other faces while idle so the first visit to each project is smooth too.
+  const warm = projects.map((_, i) => i).filter(i => i !== pi);
+  const idle = window.requestIdleCallback || (cb => setTimeout(cb, 200));
+  const warmNext = () => { if (warm.length) { faceFor(warm.shift()); idle(warmNext); } };
+  idle(warmNext);
+  colorTex = new THREE.CanvasTexture(face.color); dataTex = new THREE.CanvasTexture(face.data);
+  colorTex.anisotropy = dataTex.anisotropy = 8;
+  front = makeMaterial(colorTex, dataTex);
+  const edge = new THREE.MeshStandardMaterial({ map: makeEdgeTexture(), color: 0xe6dfd1, roughness: .92, metalness: .02 });
+  const back = new THREE.MeshStandardMaterial({ color: 0xd8d0c2, roughness: .9 });
+  mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), [edge, edge, edge, edge, front, back]);
+  scene.add(mesh);
+
+  addEventListener('resize', resize);
+  addEventListener('pointermove', e => { target.set((e.clientX / viewW) * 2 - 1, -(e.clientY / viewH) * 2 + 1); });
+  resize(); showPage(true); requestAnimationFrame(frame);
+}
+const clock = new THREE.Clock();
+function frame() {
+  requestAnimationFrame(frame);
+  const t = reduced || window.StoryVisuals.isOpen() ? 0 : clock.getElapsedTime(), u = W / 3.85, thick = .095 * u;
+  mouse.lerp(target, .08);
+  ray.setFromCamera(mouse, camera);
+  const over = ray.intersectObject(mesh).length > 0;
+  if (window.StoryVisuals.isOpen()) return;
+  hover += ((over ? 1 : 0) - hover) * .1;
+
+  const still = reduced || viewW <= 760;
+  const x = Math.sin(t * .62) * .035 * u, y = (Math.sin(t * 1.15) * .075 + Math.cos(t * .55) * .03) * u + 26, z = Math.cos(t * .85) * .08 * u;
+  const yaw = reduced ? 0 : Math.sin(t * .78) * .018 + mouse.x * .025;
+  const pitch = reduced ? 0 : Math.cos(t * .92) * .012 - mouse.y * .02;
+  const roll = Math.sin(t * .72) * .022;
+  mesh.rotation.y += (yaw - mesh.rotation.y) * .075;
+  mesh.rotation.x += (pitch - mesh.rotation.x) * .075;
+  mesh.rotation.z += (roll - mesh.rotation.z) * .075;
+  const s = still ? 1 : 1 + hover * .012;
+  if(still) mesh.rotation.set(0,0,0);
+  mesh.position.set(still ? 0 : x, still ? 0 : y, still ? 0 : z);
+  mesh.scale.set(W * s, H * s, thick * s);
+
+  // DOM copy rides on the front face (CSS y is down, so X/Z rotations flip sign)
+  content.style.transform = `translate3d(${(still?0:x).toFixed(2)}px,${(still?0:-y).toFixed(2)}px,${(still?0:z).toFixed(2)}px) rotateX(${(-mesh.rotation.x).toFixed(5)}rad) rotateY(${mesh.rotation.y.toFixed(5)}rad) rotateZ(${(-mesh.rotation.z).toFixed(5)}rad) scale(${s.toFixed(4)}) translateZ(${(thick / 2 + .5).toFixed(2)}px)`;
+
+  front.uniforms.uTime.value = t;
+  front.uniforms.uHover.value = hover;
+  front.uniforms.uLightPos.value.set(
+    Math.sin(t * .65) * 1.15 + Math.cos(t * .32) * .5 + mouse.x * 3.8,
+    Math.cos(t * .52) * .95 + .9 + mouse.y * 3.0, 5.2);
+  renderer.render(scene, camera);
+}
+
+// Kanji for the seal come from a subsetted webfont: request those glyphs before drawing
+Promise.all([
+  document.fonts.load('800 38px "Shippori Mincho"', projects.map(p => p.symbol).join('')),
+  document.fonts.load('700 13px "IBM Plex Mono"', '0123456789'),
+  document.fonts.ready
+]).catch(() => {}).then(() => {try{init();}catch(error){console.warn('Paper renderer unavailable; using CSS paper.',error);content.style.cssText='width:90vw;height:80dvh;margin-left:-45vw;margin-top:-40dvh;background:#f4f1ea;border:double 5px #6f2093';showPage(true);}});
+})();
+</script>
+</body>
+</html>

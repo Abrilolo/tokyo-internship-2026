@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en" class="ready-pending">
+<head>
+  <meta charset="utf-8">
+  <style>
+    html.ready-pending,html.ready-pending body{background:#000!important;overflow:hidden!important}
+    html.ready-starting,html.ready-starting body{overflow:hidden!important}
+    .ready-pending body > :not(#ready-gate):not(noscript){visibility:hidden!important}
+    #ready-gate{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;background:#000;perspective:800px}
+    #ready-gate[hidden]{display:none}
+    #ready-button{border:0;background:none;color:#ececef;font:400 clamp(22px,3.2vw,38px)/1.2 "IBM Plex Mono",Consolas,monospace;cursor:pointer;padding:24px 36px;letter-spacing:.16em;transform:rotateX(8deg) translateZ(0);text-shadow:0 1px 0 #777780,0 2px 0 #46464f,0 3px 0 #24242c,0 10px 22px #ffffff18;transition:transform .45s cubic-bezier(.2,.8,.2,1),color .3s,text-shadow .3s}
+    #ready-button .start-label{position:relative;display:inline-block}
+    #ready-button{position:relative}
+    #ready-button .start-label{isolation:isolate;animation:start-signal 2.8s steps(1,end) infinite}
+    #ready-button .start-channel{position:absolute;inset:0;pointer-events:none;text-shadow:none;opacity:0;mix-blend-mode:screen;animation:start-rgb 2.8s steps(1,end) infinite}
+    #ready-button .start-red{color:#ff2548;--shift:7px;--jump:-2px}
+    #ready-button .start-green{color:#23ff68;--shift:-4px;--jump:1px}
+    #ready-button .start-blue{color:#265cff;--shift:-8px;--jump:2px}
+    @keyframes start-signal{
+      0%,31%,46%,80%,100%{transform:translate(0,0);color:inherit}
+      32%,39%{transform:translate(-1px,0);color:#b0b0b8}
+      35%,43%{transform:translate(2px,0);color:#d7d7df}
+      74%{transform:translate(-2px,1px);color:#b0b0b8}
+      77%{transform:translate(1px,0);color:#d7d7df}
+    }
+    @keyframes start-rgb{
+      0%,31%,46%,80%,100%{opacity:0;transform:translate(0,0);clip-path:inset(0)}
+      32%{opacity:.9;transform:translate(var(--shift),0);clip-path:inset(0)}
+      35%{opacity:1;transform:translate(calc(var(--shift) * -1.5),var(--jump));clip-path:polygon(0 15%,100% 15%,100% 34%,0 34%,0 62%,100% 62%,100% 81%,0 81%)}
+      39%{opacity:.95;transform:translate(var(--shift),0);clip-path:inset(38% 0 35% 0)}
+      43%{opacity:.8;transform:translate(calc(var(--shift) * -.5),0);clip-path:inset(0)}
+      74%{opacity:.9;transform:translate(var(--shift),var(--jump));clip-path:inset(55% 0 12% 0)}
+      77%{opacity:.8;transform:translate(calc(var(--shift) * -.5),0);clip-path:inset(10% 0 58% 0)}
+    }
+    #ready-button:is(:hover,:focus-visible){color:#fff;transform:rotateX(0deg) translateZ(22px);text-shadow:0 1px 0 #9999a2,0 2px 0 #55555f,0 4px 0 #292933,0 14px 28px #ffffff25}
+    #ready-button:active{transform:translateZ(-4px);text-shadow:0 1px 0 #55555f}
+    @media(prefers-reduced-motion:reduce){#ready-button,#ready-button span{transition:none!important;transform:none!important}#ready-button .start-label{animation:none!important}#ready-button .start-channel{display:none;animation:none!important}}
+    #ready-button,#ready-button:focus,#ready-button:focus-visible{outline:none}
+    .ready-starting :is(.site-header,.skip-link,.grain,#cursor,#scroll-hint,#progress){visibility:hidden!important}
+  </style>
+  <noscript><style>html.ready-pending,html.ready-pending body{overflow:auto!important}#ready-gate{display:none!important}</style></noscript>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Five projects and a life in Japan. Adrián Tavera Aquino's internship at Irvine Systems, 2026.">
+  <title>Adrián Tavera · Create & Learn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Mono:wght@400;500;700&family=Shippori+Mincho:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="presentation.css?v=1118l">
+  <link rel="stylesheet" href="drift-wall.css?v=1118i">
+  <link rel="stylesheet" href="tactile.css?v=1118-wave-doors-dark">
+  <script defer src="scripts/vendor/three-r128.min.js"></script>
+  <script defer src="photos/samurai-assets.js"></script>
+  <script defer src="photos/wall/manifest.js"></script>
+  <script defer src="scripts/lightfall.js?v=1118i"></script>
+  <script defer src="scripts/samurai.js?v=1118i"></script>
+  <script defer src="scripts/stories.js?v=1118i"></script>
+  <link rel="stylesheet" href="story-visuals.css?v=1118i">
+  <script defer src="scripts/experiment-data.js?v=1118i"></script>
+  <script defer src="scripts/story-visuals.js?v=1118i"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap">
+  <link rel="stylesheet" href="story-scenes.css?v=1118i">
+  <script defer src="scripts/story-scenes.js?v=1118l"></script>
+  <script defer src="scripts/timeline.js?v=1118i"></script>
+  <script defer src="scripts/washi-paper.js?v=1118j"></script>
+  <script defer src="scripts/washi-cards.js?v=1118k"></script>
+  <script defer src="scripts/drift-wall.js?v=1118i"></script>
+  <script defer src="scripts/presentation.js?v=1118n"></script>
+</head>
+<body>
+  <div id="ready-gate"><button id="ready-button" type="button" aria-label="Start presentation"><span class="start-label" aria-hidden="true">start<span class="start-channel start-red">start</span><span class="start-channel start-green">start</span><span class="start-channel start-blue">start</span></span></button></div>
+  <svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true"><defs><filter id="ink-spread" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".025 .055" numOctaves="3" seed="7" result="fibers"/><feDisplacementMap id="ink-displacement" in="SourceGraphic" in2="fibers" scale="0" xChannelSelector="R" yChannelSelector="G"/></filter></defs></svg>
+  <a class="skip-link" href="#foundations">Skip to projects</a>
+  <header class="site-header">
+    <a class="brand" href="#hero"><img class="brand-logo" src="logo-irvine/logo-irvine.svg" alt="Irvine Systems">adrián tavera<span>°</span></a>
+    <nav aria-label="Main navigation"><a href="#index">Projects</a><a href="#japan">Life in Japan</a></nav>
+  </header>
+  <div id="lightfall-stage" aria-hidden="true"></div>
+  <div id="samurai-stage" aria-hidden="true"><div id="samurai-rig"><div id="dither-veil-container"></div></div></div>
+  <div id="hero-copy">
+    <div id="hero-top">
+      <div class="hero-company">
+        <img class="hero-company-logo" src="logo-irvine/logo-irvine.svg" alt="Irvine Systems">
+        <span class="hero-company-name">Irvine Systems</span>
+      </div>
+      <p class="eyebrow hero-eyebrow">Tokyo · Internship 2026</p>
+    </div>
+    <h1 id="hero-learn"><em>INTERNSHIP</em></h1>
+    <div id="hero-bottom">
+      <p class="hero-name">Adrián Tavera Aquino</p>
+      <p class="hero-role">Tec de Monterrey <span>· Data Science &amp; Mathematics Engineering</span></p>
+    </div>
+  </div>
+  <div id="intro-copy" class="center-copy"><p class="eyebrow">Internship 2026</p><h2>Projects &amp;<br><em>Work.</em></h2><p>What I built during my internship at Irvine Systems.</p></div>
+  <div id="project-stage" aria-label="Project stories">
+    <div class="project-heading"><p class="eyebrow">Projects</p><span id="chapter-counter">01 / 05</span></div>
+    <div id="card-materials" aria-hidden="true"></div><div id="card-space"></div>
+    <div id="story-position" aria-live="polite"></div>
+    <nav id="chapter-nav" aria-label="Project chapters"></nav>
+  </div>
+  <div id="room-stage" aria-hidden="true">
+    <img class="room-photo" src="photos/bg/japan-room-wide-v2.png" decoding="async" alt="A wide Japanese bedroom with personal belongings, opening onto Lake Kawaguchi and Mount Fuji.">
+    <div class="fuji-approach"><img src="photos/bg/fuji-approach-1.jpg" decoding="async" alt=""><img src="photos/bg/fuji-approach-2.jpg" decoding="async" alt=""><img src="photos/bg/fuji-approach-3.jpg" decoding="async" alt=""></div>
+    <div class="room-shade"></div>
+  </div>
+  <div id="door-stage" aria-hidden="true"><div class="door door-left"><div class="fusuma fusuma-outer fusuma-pine-right fusuma-flip"></div><div class="fusuma fusuma-inner fusuma-pine-left"></div></div><div class="door door-right"><div class="fusuma fusuma-inner fusuma-cranes"></div><div class="fusuma fusuma-outer fusuma-pine-right"></div></div><div class="door-light"></div><div class="door-rail door-rail-top"></div><div class="door-rail door-rail-bottom"></div></div>
+  <div id="japan-copy" class="center-copy"><p class="eyebrow" lang="ja">日本での暮らし</p><h2>Life in<br><em>Japan.</em></h2><p>Moments and places outside the office.</p></div>
+  <div id="photo-stage" aria-label="Memories from Japan"><div class="photo-heading"><span lang="ja">日々のかけら</span><p>Photos from Japan</p></div><div id="photo-wall" class="drift-wall" role="group" aria-label="Drifting wall of Japan photographs"><div class="drift-wall__plane"></div></div><span id="photo-count"></span></div>
+  <section id="closing" class="center-copy" aria-label="Thank you"><img class="closing-logo" src="logo-irvine/logo-irvine.svg" alt="Irvine Systems"><p class="eyebrow" lang="ja">ありがとうございました</p><h2>Thank you,<br><em>Irvine Systems.</em></h2><p>Adrián Tavera Aquino · Internship 2026</p><a href="#hero">Back to top <span>↑</span></a></section>
+  <main id="scroll-route" aria-label="Presentation scroll route"><section id="hero" aria-label="Introduction"></section><section id="index" aria-label="Selected projects"></section></main>
+  <div id="scroll-hint"><span>Scroll to begin</span><i></i></div>
+  <div id="progress" role="progressbar" aria-label="Presentation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
+  <div id="cursor" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+  <dialog id="photo-viewer"><button aria-label="Close photo">×</button><img alt=""><p></p></dialog>
+  <noscript><p class="noscript">Enable JavaScript to view this interactive presentation.</p></noscript>
+</body>
+</html>

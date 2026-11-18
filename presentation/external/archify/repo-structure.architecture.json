@@ -1,0 +1,238 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Estructura de quest_submissions/adrian-tavera",
+    "output": "repo-structure.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "git@gitlab03.irvine.jp:irvine/internship/quest_submissions/adrian-tavera.git",
+      "link_mode": "local-only",
+      "revision": "93aba025971882e391d34a7bba6f72110812606f"
+    },
+    "viewBox": [1280, 740],
+    "views": [
+      {
+        "id": "main-projects",
+        "label": "Proyectos principales",
+        "focus": ["root", "aiQuest", "basicProgramming", "firstAssignment", "transportation"],
+        "note": "La carpeta raiz agrupa cuatro entregas principales y archivos compartidos."
+      },
+      {
+        "id": "ai-path",
+        "label": "AI Quest",
+        "focus": ["aiQuest", "aiParts", "aiDocsTests"],
+        "note": "AI Quest contiene partes progresivas, documentacion y pruebas."
+      },
+      {
+        "id": "transportation-path",
+        "label": "Transportation",
+        "focus": ["transportation", "transportCore", "transportArtifacts"],
+        "note": "Transportation es el proyecto mas completo: codigo, datos, dashboard, docs, output y tests."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "root",
+      "type": "cloud",
+      "label": "adrian-tavera",
+      "sublabel": "repo root",
+      "tag": "GitLab submissions",
+      "pos": [490, 70],
+      "size": [220, 78],
+      "sources": [{ "path": "README.md", "label": "root readme" }]
+    },
+    {
+      "id": "sharedFiles",
+      "type": "external",
+      "label": "Archivos compartidos",
+      "sublabel": "README.md, requirements.txt, .gitignore",
+      "pos": [90, 215],
+      "size": [220, 76],
+      "sources": [
+        { "path": "README.md" },
+        { "path": "requirements.txt" }
+      ]
+    },
+    {
+      "id": "supportDirs",
+      "type": "security",
+      "label": "Soporte local",
+      "sublabel": ".venv, .vscode, caches, .claude",
+      "pos": [890, 215],
+      "size": [220, 76]
+    },
+    {
+      "id": "aiQuest",
+      "type": "backend",
+      "label": "ai_quest",
+      "sublabel": "curso de IA por partes",
+      "pos": [90, 365],
+      "size": [210, 76],
+      "sources": [
+        { "path": "ai_quest/README.md" },
+        { "path": "ai_quest/requirements.txt" }
+      ]
+    },
+    {
+      "id": "basicProgramming",
+      "type": "backend",
+      "label": "basic_programming",
+      "sublabel": "problem_1 ... problem_9",
+      "pos": [365, 365],
+      "size": [210, 76],
+      "sources": [{ "path": "basic_programming/instructions_basic_progamming.md" }]
+    },
+    {
+      "id": "firstAssignment",
+      "type": "backend",
+      "label": "firstAssignment_en",
+      "sublabel": "A ... K",
+      "pos": [640, 365],
+      "size": [210, 76],
+      "sources": [
+        { "path": "firstAssignment_en/README.md" },
+        { "path": "firstAssignment_en/instructions_firstAssignment_en.md" }
+      ]
+    },
+    {
+      "id": "transportation",
+      "type": "backend",
+      "label": "transportation",
+      "sublabel": "data extractor project",
+      "pos": [915, 365],
+      "size": [210, 76],
+      "sources": [{ "path": "transportation/transportation_expenses_extractor_en.md" }]
+    },
+    {
+      "id": "aiParts",
+      "type": "database",
+      "label": "Partes AI Quest",
+      "sublabel": "parte_1, part_2_flappy ... part_9_racing",
+      "pos": [90, 545],
+      "size": [230, 76],
+      "sources": [
+        { "path": "ai_quest/parte_1/README.md" },
+        { "path": "ai_quest/part_9_racing/research.md" }
+      ]
+    },
+    {
+      "id": "aiDocsTests",
+      "type": "external",
+      "label": "Docs y tests AI",
+      "sublabel": "docs, tests",
+      "pos": [350, 545],
+      "size": [190, 76],
+      "sources": [
+        { "path": "ai_quest/docs/backlog.md" },
+        { "path": "ai_quest/tests/test_quest.py" }
+      ]
+    },
+    {
+      "id": "transportCore",
+      "type": "database",
+      "label": "Nucleo Transportation",
+      "sublabel": "src, data, read.py, tests",
+      "pos": [740, 545],
+      "size": [220, 76]
+    },
+    {
+      "id": "transportArtifacts",
+      "type": "external",
+      "label": "Salidas Transportation",
+      "sublabel": "dashboard, docs, output",
+      "pos": [990, 545],
+      "size": [190, 76]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Entregas y proyectos",
+      "wraps": ["aiQuest", "basicProgramming", "firstAssignment", "transportation", "aiParts", "aiDocsTests", "transportCore", "transportArtifacts"],
+      "pad": 28
+    },
+    {
+      "kind": "security-group",
+      "label": "Metadatos / tooling local",
+      "wraps": ["sharedFiles", "supportDirs"],
+      "pad": 24
+    }
+  ],
+  "connections": [
+    {
+      "id": "root-to-shared",
+      "from": "root",
+      "to": "sharedFiles",
+      "label": "config comun",
+      "variant": "dashed"
+    },
+    {
+      "id": "root-to-support",
+      "from": "root",
+      "to": "supportDirs",
+      "label": "entorno local",
+      "variant": "dashed"
+    },
+    {
+      "id": "root-to-ai",
+      "from": "root",
+      "to": "aiQuest",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-to-basic",
+      "from": "root",
+      "to": "basicProgramming",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-to-first",
+      "from": "root",
+      "to": "firstAssignment",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "root-to-transport",
+      "from": "root",
+      "to": "transportation",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ai-to-parts",
+      "from": "aiQuest",
+      "to": "aiParts",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "ai-to-docs-tests",
+      "from": "aiQuest",
+      "to": "aiDocsTests",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "transport-to-core",
+      "from": "transportation",
+      "to": "transportCore",
+      "label": "codigo y datos",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "transport-to-artifacts",
+      "from": "transportation",
+      "to": "transportArtifacts",
+      "label": "resultados",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ]
+}

@@ -1,0 +1,2020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><base href="../" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Adrián Tavera Aquino · The Climb | Irvine Systems Internship 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&family=Shippori+Mincho:wght@500;700;800&family=JetBrains+Mono:wght@400;500&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Caveat:wght@500;700&display=swap" rel="stylesheet" />
+<!-- Three.js for 3D Circular Carousel of Bendable Washi Cards around the Samurai -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  --paper:#f3ebdc; --paper-2:#e4d8c2; --ink:#14100d; --ink-2:#221a15;
+  --amber:#ffb65c; --vermilion:#c83e37; --pine:#2f5d4e; --wood:#5b3520;
+  --glass:rgba(18,14,12,.62); --line:rgba(243,235,220,.16);
+  --sans:"Inter Tight","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --serif:"Shippori Mincho","Yu Mincho","Hiragino Mincho ProN",serif;
+  --mono:"JetBrains Mono","Space Mono",ui-monospace,Consolas,monospace;
+  --hand:"Caveat","Segoe Print",cursive;
+  --sv:0;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:#120f17}
+body{font-family:var(--sans);color:var(--paper);overflow-x:hidden;-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
+@media (hover:hover) and (pointer:fine){body,body a,body button{cursor:none}}
+a{color:inherit}
+img{display:block;max-width:100%}
+::selection{background:var(--amber);color:var(--ink)}
+
+/* ---------- fixed world ---------- */
+#world{position:fixed;inset:0;z-index:0;overflow:hidden;background:#120f17}
+#veil{position:absolute;inset:0;z-index:24;pointer-events:none;background:radial-gradient(120% 90% at 50% 45%,rgba(8,6,5,0) 40%,rgba(8,6,5,.5)),linear-gradient(rgba(10,8,7,.16),rgba(10,8,7,.08) 45%,rgba(10,8,7,.3))}
+#mist{position:absolute;inset:0;z-index:45;pointer-events:none;opacity:0;visibility:hidden}
+#motes{position:fixed;inset:0;z-index:3;pointer-events:none}
+#fade{position:fixed;inset:0;z-index:65;pointer-events:none;background:linear-gradient(rgba(8,6,5,.78),rgba(8,6,5,0) 15%,rgba(8,6,5,0) 86%,rgba(8,6,5,.8))}
+#grain{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:.06;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.2 -.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ---------- React Bits <DitherVeil /> Samurai Stage ---------- */
+.dither-veil{
+  position:fixed;inset:0;z-index:8;
+  width:100%;height:100%;overflow:hidden;
+  touch-action:pan-y;
+  background:#120f17;
+  will-change:opacity,transform;
+}
+#samurai-intro-overlay{
+  position:fixed;inset:0;z-index:12;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:0 6vw;
+  pointer-events:none;opacity:0;visibility:hidden;
+  will-change:opacity,transform;
+}
+#samurai-intro-overlay .eyebrow{
+  font:500 11px var(--mono);letter-spacing:.24em;text-transform:uppercase;color:var(--amber);
+  display:inline-flex;gap:12px;align-items:center;justify-content:center;
+  text-shadow:0 2px 18px rgba(0,0,0,.9);
+}
+#samurai-intro-overlay .eyebrow::before,#samurai-intro-overlay .eyebrow::after{
+  content:"";width:28px;height:1px;background:var(--amber);
+}
+#samurai-intro-overlay h1{
+  font-size:clamp(48px,8.4vw,132px);font-weight:400;line-height:.92;letter-spacing:-.055em;
+  margin:22px 0 28px;max-width:13ch;
+  text-shadow:0 8px 48px rgba(0,0,0,.95);
+}
+#samurai-intro-overlay h1 em{
+  font-family:var(--serif);font-style:normal;font-weight:500;letter-spacing:-.02em;color:var(--amber);
+}
+#samurai-intro-overlay .hero-meta{
+  display:flex;gap:36px;flex-wrap:wrap;justify-content:center;font-size:15.5px;opacity:.92;
+  text-shadow:0 2px 18px rgba(0,0,0,.95);
+}
+#samurai-intro-overlay .hero-meta b{
+  display:block;font:500 10px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--amber);opacity:.85;margin-bottom:5px;
+}
+
+/* ---------- 3D Circular Carousel of Bendable Washi Cards around the Samurai ---------- */
+#samurai-carousel-wrap{
+  position:fixed;inset:0;z-index:16;
+  pointer-events:none;opacity:0;visibility:hidden;
+  will-change:opacity;
+}
+#samurai-carousel-wrap.interactive{
+  pointer-events:auto;
+}
+#samurai-carousel-canvas{
+  position:absolute;inset:0;
+}
+
+#index-ui{position:fixed;inset:0;z-index:22;pointer-events:none;opacity:0;visibility:hidden}
+.stage-head{position:absolute;left:0;right:0;top:0;height:12.5vh;display:flex;align-items:center;justify-content:center}
+.stage-head h2{font-size:clamp(22px,2.5vw,38px);font-weight:400;letter-spacing:-.04em;display:flex;align-items:center;gap:18px;text-shadow:0 2px 24px #000}
+.stage-head .kanji{font-family:var(--serif);font-size:.62em;letter-spacing:.2em;color:var(--amber)}
+.pnav{position:absolute;left:0;right:0;bottom:5vh;pointer-events:auto;display:flex;justify-content:center;gap:clamp(14px,2.6vw,44px)}
+.pnav button{background:none;border:0;color:var(--paper);font:400 13px var(--sans);letter-spacing:.02em;opacity:.45;display:flex;align-items:baseline;gap:9px;padding:8px 0;border-bottom:1px solid transparent;transition:opacity .4s,border-color .4s;text-shadow:0 2px 12px #000}
+.pnav button i{font-family:var(--serif);font-style:normal;font-size:15px}
+.pnav button:hover{opacity:.9}.pnav button.on{opacity:1;border-color:var(--paper)}
+
+/* ---------- HUD ---------- */
+.hud{position:fixed;z-index:70;mix-blend-mode:normal}
+#brand{top:26px;left:32px;font-size:22px;font-weight:500;letter-spacing:-.04em;text-decoration:none}
+#brand b{font-family:var(--serif);font-weight:500;letter-spacing:0}
+#nav{top:22px;right:32px;display:flex;gap:6px;align-items:center}
+#nav a{font-size:15px;text-decoration:none;padding:8px 14px;border-radius:99px;transition:background .3s,color .3s}
+#nav a:hover{background:var(--paper);color:var(--ink)}
+.hero-jp{position:fixed;right:4vw;top:16vh;z-index:14;writing-mode:vertical-rl;font-family:var(--serif);font-size:clamp(24px,2.8vw,46px);letter-spacing:.3em;opacity:.85;pointer-events:none;text-shadow:0 2px 30px #000;transition:opacity .4s}
+.hero-hint{position:fixed;right:4vw;bottom:7vh;z-index:14;font:500 10px var(--mono);letter-spacing:.2em;text-transform:uppercase;text-align:right;line-height:2;opacity:.75;pointer-events:none;transition:opacity .4s}
+.hero-hint::after{content:"";display:block;width:1px;height:48px;background:var(--paper);margin:10px 0 0 auto;animation:drip 2s ease-in-out infinite;transform-origin:top}
+@keyframes drip{0%{transform:scaleY(0)}50%{transform:scaleY(1)}100%{transform:scaleY(1);opacity:0}}
+
+/* ---------- cursor ---------- */
+#cur,#cur-ring{position:fixed;left:0;top:0;z-index:100;pointer-events:none;border-radius:50%;translate:-50% -50%}
+#cur{width:8px;height:8px;background:var(--paper);mix-blend-mode:difference}
+#cur-ring{width:44px;height:44px;border:1px solid rgba(243,235,220,.55);display:grid;place-items:center;font:500 11px var(--sans);color:var(--ink);
+  transition:width .35s cubic-bezier(.2,.9,.2,1),height .35s cubic-bezier(.2,.9,.2,1),background .3s,border-color .3s}
+#cur-ring span{opacity:0;transition:opacity .2s}
+#cur-ring.label{width:86px;height:86px;background:var(--paper);border-color:var(--paper)}
+#cur-ring.label span{opacity:1}
+#cur-ring.small{width:18px;height:18px;border-color:var(--amber)}
+@media not ((hover:hover) and (pointer:fine)){#cur,#cur-ring{display:none}}
+
+/* ---------- shared layout ---------- */
+main{position:relative;z-index:5;pointer-events:none}
+main>section{pointer-events:auto}
+main>#hero,main>#hero-intro,main>#index,main>#climb{pointer-events:none}
+#hero{height:105vh}
+#hero-intro{height:135vh}
+#index{position:relative;height:calc(100vh + 5 * 85vh)}
+
+.station{display:flex;align-items:center;gap:18px;font:500 11px var(--mono);letter-spacing:.2em;text-transform:uppercase}
+.station .kanji{font-family:var(--serif);font-size:30px;letter-spacing:.12em;color:var(--amber);text-shadow:0 0 30px rgba(255,182,92,.55);white-space:nowrap;flex:none}
+.station .dash{width:60px;height:1px;background:var(--paper);opacity:.5;flex:none}
+.lede{font-size:clamp(18px,1.7vw,25px);line-height:1.42;max-width:44ch;font-weight:300;text-shadow:0 2px 20px rgba(0,0,0,.7)}
+.glass{background:var(--glass);border:1px solid var(--line);border-radius:20px;backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2)}
+.beats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:9vh}
+.beat{padding:28px 28px 30px}
+.beat h4{font:500 10px var(--mono);letter-spacing:.22em;text-transform:uppercase;color:var(--amber);margin-bottom:16px;display:flex;justify-content:space-between}
+.beat h4 span{opacity:.5;color:var(--paper)}
+.beat h3{font-size:24px;font-weight:500;letter-spacing:-.03em;line-height:1.12;margin-bottom:10px}
+.beat p{font-size:15.5px;line-height:1.55;opacity:.82;font-weight:300}
+.beat p b{font-weight:500;color:var(--paper);opacity:1}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+.chip{font:400 11px var(--mono);padding:6px 11px;border:1px solid var(--line);border-radius:99px;background:rgba(243,235,220,.05)}
+.sub{font:500 10px var(--mono);letter-spacing:.22em;text-transform:uppercase;margin:12vh 0 26px;display:flex;align-items:center;gap:14px;text-shadow:0 1px 8px #000}
+.sub::after{content:"";flex:1;height:1px;background:var(--line)}
+.link{display:inline-flex;gap:10px;align-items:center;font-size:15px;text-decoration:none;padding:12px 20px;border-radius:99px;background:var(--paper);color:var(--ink);font-weight:500;margin-top:22px;transition:background .3s,gap .3s}
+.link:hover{background:var(--amber);gap:16px}
+
+/* reveal */
+.rise{opacity:0;translate:0 46px;filter:blur(10px);transition:opacity .9s cubic-bezier(.2,.8,.2,1),translate .9s cubic-bezier(.2,.8,.2,1),filter .9s;transition-delay:calc(var(--i,0)*90ms)}
+.in .rise,.rise.in{opacity:1;translate:0 0;filter:none}
+.split .w{display:inline-block;opacity:0;translate:0 .5em;filter:blur(14px);transition:opacity .8s,translate .8s cubic-bezier(.2,.8,.2,1),filter .8s;transition-delay:calc(var(--i)*70ms)}
+.in .split .w,.split.in .w{opacity:1;translate:0 0;filter:none}
+
+/* shots */
+.tilt{transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.shot{position:relative;display:block;text-decoration:none}
+.shot .frame{position:relative;overflow:hidden;border-radius:18px;background:var(--paper);aspect-ratio:16/10;box-shadow:0 30px 80px -20px rgba(0,0,0,.7)}
+.shot .frame img{width:100%;height:100%;object-fit:cover;transition:scale 1.1s cubic-bezier(.2,.8,.2,1);translate:calc(var(--px,0)*1px) calc(var(--py,0)*1px);scale:1.18}
+.shot:hover .frame img{scale:1.24}
+.shot.contain .frame img{object-fit:contain;scale:1;padding:14px;translate:none}
+.shot.contain:hover .frame img{scale:1.04}
+.shot figcaption,.shot .cap{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;padding:14px 2px 12px;border-bottom:1px solid rgba(243,235,220,.55);text-shadow:0 1px 14px rgba(0,0,0,.8)}
+.shot .cap b{display:block;font-size:20px;font-weight:500;letter-spacing:-.03em}
+.shot .cap span{display:block;font-size:17px;font-weight:300;opacity:.85}
+.shot .cap i{font-style:normal;font-size:20px;transition:translate .3s}
+.shot:hover .cap i{translate:4px 4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:44px 54px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:34px}
+.slot .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px;color:var(--ink);
+  background:repeating-linear-gradient(45deg,rgba(20,16,13,.05) 0 10px,transparent 10px 20px),var(--paper-2)}
+.slot .ph b{font-family:var(--serif);font-size:34px}
+.slot .ph span{font-size:14px;max-width:30ch;opacity:.75}
+.slot .ph code{font:500 10.5px var(--mono);padding:5px 10px;border:1px dashed rgba(20,16,13,.4);border-radius:6px}
+.slot.filled .ph{display:none}
+
+/* ---------- foundations ---------- */
+.cipher{font:400 15px var(--mono);margin-top:16px;padding:14px 16px;border-radius:12px;background:rgba(0,0,0,.35);border:1px dashed var(--line);min-height:68px;line-height:1.5}
+.cipher small{display:block;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--amber);margin-bottom:6px}
+.also{margin-top:22px;font-size:14px;opacity:.75;font-weight:300;line-height:1.7;text-shadow:0 1px 10px #000}
+
+/* ---------- game arena ---------- */
+.steps{position:relative;padding-left:34px}
+.steps::before{content:"";position:absolute;left:9px;top:8px;bottom:8px;width:1px;background:linear-gradient(var(--amber),rgba(255,182,92,.1))}
+.step{position:relative;padding:0 0 30px}
+.step::before{content:"";position:absolute;left:-30px;top:7px;width:11px;height:11px;border-radius:50%;background:var(--amber);box-shadow:0 0 16px var(--amber)}
+.step small{font:500 10px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--amber)}
+.step h3{font-size:25px;font-weight:500;letter-spacing:-.03em;margin:6px 0 6px;text-shadow:0 2px 16px rgba(0,0,0,.8)}
+.step p{font-size:15.5px;line-height:1.55;font-weight:300;opacity:.88;max-width:46ch;text-shadow:0 1px 12px rgba(0,0,0,.9)}
+.board{position:sticky;top:14vh;background:#f7f4ec;color:#23303a;border-radius:14px;border:10px solid #cfc9bc;box-shadow:0 40px 90px -20px rgba(0,0,0,.75),inset 0 0 60px rgba(0,0,0,.06);padding:20px 22px 24px;font-family:var(--hand);overflow:hidden;min-height:400px}
+.board-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.board-top b{font-size:30px}
+.toggle{display:flex;border:2px solid #23303a;border-radius:99px;overflow:hidden}
+.toggle button{font:700 19px var(--hand);background:none;border:0;padding:3px 16px;color:#23303a}
+.toggle button.on{background:#23303a;color:#f7f4ec}
+.wrow{display:grid;grid-template-columns:36px 1fr 90px auto;gap:12px;align-items:center;border-bottom:2px solid rgba(35,48,58,.25);padding:11px 4px;font-size:23px}
+.wrow .sq{height:9px;border-radius:9px;background:rgba(35,48,58,.28)}
+.wrow .acts{display:flex;gap:7px;min-width:110px;justify-content:flex-end}
+.wbtn{border:2px solid #c0392b;color:#c0392b;border-radius:9px 12px 8px 13px;padding:0 10px;font:700 18px var(--hand);background:none}
+.dots3{border:2px solid #1c7a52;color:#1c7a52;border-radius:50%;width:34px;height:34px;font:700 22px/1 var(--hand);background:none;animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(28,122,82,.5)}100%{box-shadow:0 0 0 14px rgba(28,122,82,0)}}
+.board[data-mode=before] .dots3,.board[data-mode=after] .wbtn{display:none}
+.drawer{position:absolute;top:0;right:0;bottom:0;width:52%;background:#fffdf7;border-left:3px solid #1c7a52;padding:20px;translate:105% 0;transition:translate .5s cubic-bezier(.2,.9,.2,1);box-shadow:-20px 0 40px rgba(0,0,0,.15)}
+.board.open .drawer{translate:0 0}
+.drawer b{font-size:27px;display:block;margin-bottom:8px;color:#1c7a52}
+.drawer p{font-size:20px;line-height:1.25;margin-bottom:10px}
+.drawer .wbtn{display:inline-block!important;border-color:#1c7a52;color:#1c7a52;margin:0 6px 6px 0}
+.drawer .x{position:absolute;top:10px;right:14px;background:none;border:0;font:700 26px var(--hand);color:#23303a}
+.quote{font-family:var(--serif);font-size:clamp(26px,3.3vw,52px);line-height:1.25;max-width:24ch;margin:14vh auto 0;text-align:center;text-shadow:0 2px 30px rgba(0,0,0,.8)}
+.quote cite{display:block;font:500 10px var(--mono);letter-spacing:.22em;text-transform:uppercase;font-style:normal;margin-top:22px;color:var(--amber)}
+
+/* ---------- suica ---------- */
+.card3d{aspect-ratio:1.586;border-radius:22px;padding:26px 28px;display:flex;flex-direction:column;justify-content:space-between;color:#0c1f17;
+  background:radial-gradient(120% 90% at 0 0,#e6f4d0 0,#9fd08a 45%,#3f9b63 100%);box-shadow:0 50px 100px -24px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.6);position:relative;overflow:hidden}
+.card3d::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.45) 48%,transparent 60%);translate:calc(var(--px,0)*6px) 0;mix-blend-mode:soft-light}
+.card3d small{font:500 10px var(--mono);letter-spacing:.2em;text-transform:uppercase}
+.card3d .bal{font-size:clamp(46px,5.6vw,86px);font-weight:500;letter-spacing:-.05em;line-height:1}
+.card3d .waves{position:absolute;right:26px;top:24px;font-size:26px;letter-spacing:-4px;opacity:.7}
+.flow{display:flex;align-items:stretch;gap:0;margin-top:26px}
+.flow div{flex:1;padding:14px 12px;font:400 11px var(--mono);border:1px solid var(--line);background:rgba(0,0,0,.3);text-align:center;position:relative}
+.flow div b{display:block;font:500 15px var(--sans);margin-bottom:4px;color:var(--amber)}
+.flow div:first-child{border-radius:12px 0 0 12px}.flow div:last-child{border-radius:0 12px 12px 0}
+table.trips{width:100%;border-collapse:collapse;font-size:15px}
+.trips th{font:500 9.5px var(--mono);letter-spacing:.2em;text-transform:uppercase;text-align:left;padding:10px 14px;opacity:.6}
+.trips td{padding:14px;border-top:1px solid var(--line)}
+.trips td:nth-child(3){font-family:var(--serif);opacity:.8}
+.trips td:nth-child(4){font-family:var(--mono);color:#ff9d8a}
+.trips td:last-child{font-family:var(--mono);text-align:right}
+
+/* ---------- ai quest ---------- */
+.act-head{display:flex;align-items:baseline;gap:22px;margin-bottom:24px;text-shadow:0 2px 16px rgba(0,0,0,.9)}
+.act-head b{font-family:var(--serif);font-size:clamp(46px,6vw,96px);color:var(--amber);line-height:1}
+.act-head h3{font-size:clamp(26px,3vw,44px);font-weight:400;letter-spacing:-.04em}
+.act-head p{font-size:16px;font-weight:300;opacity:.85;max-width:52ch;margin-top:6px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:26px 0 34px}
+.stat{padding:22px 24px}
+.stat b{display:block;font-size:clamp(34px,4.4vw,68px);font-weight:400;letter-spacing:-.05em;line-height:1;color:var(--amber)}
+.stat span{font-size:14px;opacity:.8;font-weight:300;display:block;margin-top:8px;line-height:1.4}
+.stat b span{display:inline;font-size:inherit;font-weight:inherit;opacity:1;margin:0;line-height:inherit}
+.term{font:400 13.5px/1.75 var(--mono);padding:24px 26px;background:rgba(6,6,8,.82);border:1px solid var(--line);border-radius:16px}
+.term .bar{display:flex;gap:7px;margin-bottom:14px}.term .bar i{width:10px;height:10px;border-radius:50%;background:#444}
+.term p{opacity:0;translate:0 8px;transition:.5s;transition-delay:calc(var(--i)*380ms)}
+.in .term p{opacity:1;translate:0 0}
+.term .a{color:var(--amber)}.term .r{color:#8fd3a8;padding-left:18px}.term .f{color:#fff;font-weight:500;margin-top:8px}.term .c{opacity:.5!important}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:34px;align-items:start}
+
+/* ---------- launcher ---------- */
+.phones{display:flex;justify-content:center;gap:2.4vw;margin-top:10vh;perspective:1600px}
+.phone{width:min(19vw,250px);flex:none;border-radius:34px;padding:8px;background:#0a0a0a;border:1px solid #3a3a3a;box-shadow:0 50px 100px -20px rgba(0,0,0,.85);text-decoration:none}
+.phone:nth-child(odd){margin-top:60px}
+.phone img{border-radius:27px;width:100%;aspect-ratio:1080/2340;object-fit:cover}
+.phone span{display:block;text-align:center;font:500 10px var(--mono);letter-spacing:.2em;text-transform:uppercase;padding:12px 0 6px}
+
+/* ---------- reflections & summit ---------- */
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:9vh}
+.cols .beat ul{list-style:none;margin-top:14px}
+.cols .beat li{font-size:15.5px;line-height:1.5;font-weight:300;padding:11px 0;border-top:1px solid var(--line);opacity:.9}
+#summit{position:relative;height:200vh}
+.dw-pin{position:sticky;top:0;height:100vh;overflow:hidden}
+.drift-wall{position:relative;width:100%;height:100%;overflow:hidden;perspective:1200px;perspective-origin:50% 50%;--dw-gap:18px;--dw-radius:14px;--dw-lift:70px;--dw-dim:1;--dw-overlay:#0b0806}
+.drift-wall__plane{position:absolute;top:50%;left:50%;display:flex;transform-style:preserve-3d;will-change:transform}
+.drift-wall__col{position:relative;width:calc(var(--dw-tile-w) + var(--dw-gap));transform-style:preserve-3d}
+.drift-wall__track{display:flex;flex-direction:column;will-change:transform;transform-style:preserve-3d}
+.drift-wall__tile{position:relative;display:block;width:100%;height:calc(var(--dw-tile-h) + var(--dw-gap));flex:0 0 auto;transform-style:preserve-3d}
+.drift-wall__inner{position:absolute;inset:calc(var(--dw-gap) / 2);display:block;border-radius:var(--dw-radius);overflow:hidden;background:#0f0c0a;opacity:var(--dw-dim);transform:translateZ(0);pointer-events:none;
+  box-shadow:0 16px 36px -16px rgba(0,0,0,.7);transition:transform .42s cubic-bezier(.22,1,.36,1),opacity .42s cubic-bezier(.22,1,.36,1),box-shadow .42s cubic-bezier(.22,1,.36,1)}
+.drift-wall__tile img{width:100%;height:100%;object-fit:cover;object-position:50% 32%;display:block;user-select:none;-webkit-user-drag:none}
+.drift-wall__overlay{position:absolute;inset:0;background:var(--dw-overlay);opacity:0;transition:opacity .42s}
+.drift-wall__tile.is-active .drift-wall__inner{opacity:1;transform:translateZ(var(--dw-lift));box-shadow:0 24px 60px -18px rgba(0,0,0,.75)}
+#thanks{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:10vh 6vw}
+#thanks .jp{font-family:var(--serif);font-size:clamp(40px,7vw,120px);letter-spacing:.06em;text-shadow:0 0 60px rgba(255,182,92,.6),0 4px 40px rgba(0,0,0,.5)}
+#thanks h2{font-size:clamp(28px,3.4vw,54px);font-weight:300;letter-spacing:-.04em;margin:18px 0 26px;text-shadow:0 2px 30px rgba(0,0,0,.6)}
+#thanks p{font:500 11px var(--mono);letter-spacing:.22em;text-transform:uppercase;text-shadow:0 1px 10px rgba(0,0,0,.8)}
+#thanks .credits{max-width:96ch;margin:28px auto 0;font-size:9.5px;line-height:1.9;letter-spacing:.12em;opacity:.6}
+
+/* lightbox */
+#lb{position:fixed;inset:0;z-index:90;background:rgba(8,6,5,.94);display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .35s}
+#lb.on{opacity:1;pointer-events:auto}
+#lb img{max-width:92vw;max-height:90vh;object-fit:contain;background:var(--paper);scale:.94;transition:scale .5s cubic-bezier(.2,.8,.2,1)}
+#lb.on img{scale:1}
+
+/* ---------- photographic world: real photos split into depth layers ---------- */
+.ly{position:absolute;left:0;top:0;max-width:none;height:auto;transform-origin:0 0;will-change:transform,opacity;visibility:hidden;pointer-events:none;user-select:none}
+#grade{position:absolute;inset:0;z-index:25;pointer-events:none;opacity:0;visibility:hidden;background:linear-gradient(rgba(6,9,30,.9),rgba(16,14,44,.82) 55%,rgba(44,24,52,.74))}
+#climb{position:relative}
+
+/* ---------- panels that orbit the mountain ---------- */
+.orb{position:absolute;left:0;top:0;width:min(1180px,88vw);padding:34px 40px 36px;border-radius:30px;visibility:hidden;pointer-events:none;will-change:transform,opacity;
+  background:linear-gradient(160deg,rgba(24,20,17,.9),rgba(9,8,7,.94));border:1px solid rgba(243,235,220,.22);
+  box-shadow:0 60px 120px -30px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.06)}
+.orb.cur{pointer-events:auto}
+.orb.far{background:linear-gradient(160deg,rgba(24,20,17,.96),rgba(10,9,8,.97))}
+.orb h2{font-size:clamp(34px,4.5vw,72px);font-weight:400;line-height:.95;letter-spacing:-.05em;margin:16px 0;max-width:17ch}
+.orb h2 em,.orb h3.big em{font-family:var(--serif);font-style:normal;color:var(--amber);letter-spacing:-.02em}
+.orb h3.big{font-size:clamp(28px,3.2vw,50px);font-weight:400;line-height:1;letter-spacing:-.045em;margin:0 0 16px}
+.orb .lede{font-size:clamp(15.5px,1.3vw,19.5px);max-width:62ch;text-shadow:none}
+.orb .glass{background:rgba(243,235,220,.055);backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:16px}
+.orb .beats,.orb .cols{margin-top:24px;gap:14px}
+.orb .beat{padding:20px 20px 22px}.orb .beat h4{margin-bottom:12px}.orb .beat h3{font-size:20px}.orb .beat p,.orb .cols .beat li{font-size:14.5px}
+.orb .cols .beat li{padding:8px 0}
+.orb .sub{margin:0 0 18px;text-shadow:none;color:var(--amber)}
+.orb .split2{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.orb .also{margin-top:14px;text-shadow:none}
+.orb .link{margin-top:18px}
+.orb .steps{padding-left:30px}.orb .step{padding-bottom:16px}.orb .step:last-child{padding-bottom:0}.orb .step h3{font-size:20px;text-shadow:none;margin:4px 0}.orb .step p{font-size:14.5px;text-shadow:none}
+.orb .board{position:relative;top:0;min-height:0}
+.orb .wrow{padding:8px 4px;font-size:21px}
+.orb .grid2{gap:26px 34px}.orb .grid3{gap:22px}
+.orb .shot .frame{box-shadow:0 20px 50px -18px rgba(0,0,0,.7)}
+.orb .shot .cap{padding:10px 2px 8px;text-shadow:none}.orb .shot .cap b{font-size:17px}.orb .shot .cap span{font-size:14.5px}
+.orb .grid2 .shot .frame{aspect-ratio:16/8.4}
+.orb .grid3 .shot .frame{max-height:36vh}
+.orb .quote{font-size:clamp(19px,1.9vw,28px);max-width:44ch;margin:22px auto 0;text-shadow:none}
+.orb .quote cite{margin-top:12px}
+.orb-quote{width:min(900px,80vw);padding:56px 60px 60px}
+.orb-quote .quote{font-size:clamp(28px,3.4vw,52px);max-width:22ch;margin:0 auto}
+.orb .flow{margin-top:18px}
+.orb .trips td{padding:10px 14px}.orb .trips th{padding:8px 14px}
+.orb .act-head{margin-bottom:18px;text-shadow:none}.orb .act-head b{font-size:clamp(40px,4.6vw,72px)}.orb .act-head h3{font-size:clamp(22px,2.3vw,34px)}.orb .act-head p{font-size:15px}
+.orb .stats{margin:18px 0 0;gap:14px}.orb .stat{padding:18px 20px}.orb .stat b{font-size:clamp(30px,3.6vw,54px)}
+.orb .two{gap:26px}
+.orb .term{font-size:13px;padding:20px 22px}
+.orb .phones{margin-top:0;gap:14px;perspective:none}.orb .phone{width:auto;flex:1 1 0;min-width:0;border-radius:24px;padding:6px}.orb .phone:nth-child(odd){margin-top:34px}.orb .phone img{border-radius:19px}.orb .phone span{padding:9px 0 4px;font-size:9px}
+
+@media (max-width:980px){
+  .beats,.cols,.stats,.grid3,.grid2,.two{grid-template-columns:1fr}
+  .phones{flex-wrap:wrap}.phone{width:40vw}.phone:nth-child(odd){margin-top:0}
+  .hero-jp{display:none}.board{position:relative;top:0}
+  .orb{padding:22px}.orb .split2{grid-template-columns:1fr;gap:20px}
+}
+@media (prefers-reduced-motion:reduce){.rise,.split .w{transition:none;opacity:1;translate:0 0;filter:none}}
+</style>
+</head>
+<body>
+
+<!-- ============ WORLD: Photographic depth layers + Orbiting panels ============ -->
+<div id="world">
+  <!-- 4 · sunrise from the summit -->
+  <img class="ly" id="ly-sun" src="photos/bg/sunrise.jpg" alt="" style="z-index:1" />
+  <!-- 3 · torii at the summit, before dawn -->
+  <img class="ly" id="ly-torii-sky" src="photos/bg/torii-sky.jpg" alt="" style="z-index:2" />
+  <img class="ly" id="ly-torii-fg" src="photos/bg/torii-fg.webp" alt="" style="z-index:21" />
+  <!-- 2 · above the sea of clouds -->
+  <img class="ly" id="ly-clouds-sky" src="photos/bg/clouds-sky.jpg" alt="" style="z-index:3" />
+  <img class="ly" id="ly-clouds-mid" src="photos/bg/clouds-mid.webp" alt="" style="z-index:20" />
+  <img class="ly" id="ly-clouds-near" src="photos/bg/clouds-near.webp" alt="" style="z-index:22" />
+  <!-- 1 · Fuji from Lake Kawaguchi -->
+  <img class="ly" id="ly-base-sky" src="photos/bg/base-sky.jpg" alt="" style="z-index:4" />
+  <img class="ly" id="ly-base-fg" src="photos/bg/base-fg.webp" alt="" style="z-index:20" />
+  <div id="grade"></div>
+  <div id="veil"></div>
+  <div id="mist"></div>
+
+  <!-- ======== 01 FOUNDATIONS ======== -->
+  <article class="orb" id="foundations" data-name="Foundations" data-tick>
+    <div class="station"><span class="kanji">一合目</span><span class="dash"></span><span>Station 01 · First Assignment &amp; Basic Programming</span></div>
+    <h2 class="split">Learning to walk <em>before the climb</em></h2>
+    <p class="lede rise">Twenty small challenges with no shortcuts allowed. The same ideas, rebuilt by hand in Python, C, JavaScript and Ruby, so I could see how each language really thinks.</p>
+    <div class="beats">
+      <article class="beat glass rise"><h4>What it was <span>01</span></h4><h3>11 engineering tasks + 9 data-structure problems</h3><p>Linked lists, stacks, queues, self-balancing trees and a hash table whose buckets are trees. Then systems work: a Linux watchdog that heals a network service by itself, and eight ways to make a slow C program fast.</p></article>
+      <article class="beat glass rise" style="--i:1"><h4>Favourite moment <span>02</span></h4><h3>Inventing a language and breaking a cipher</h3><p><b>IrvineLang</b> is a tiny virtual machine whose instructions are the letters I‑r‑v‑i‑n‑e. And one task gave me only scrambled text — letter frequencies turned it back into a novel.</p>
+        <div class="cipher" id="cipher" data-cursor="Decrypt"><small>hover to decrypt</small><span>Ig. Sqlod, qz fro Iulqg Zugi, ruc aqmeoc fro rol-rqhdod</span></div></article>
+      <article class="beat glass rise" style="--i:2"><h4>Built with <span>03</span></h4><h3>Four languages, one terminal</h3><div class="chips"><span class="chip">Python</span><span class="chip">C</span><span class="chip">JavaScript</span><span class="chip">Ruby</span><span class="chip">Bash</span><span class="chip">Prolog (reading)</span><span class="chip">Regex</span><span class="chip">Pandas</span><span class="chip">Git</span><span class="chip">pytest</span></div>
+        <p style="margin-top:14px">What I took with me: reading code I didn't write, and proving that it works instead of hoping it does.</p></article>
+    </div>
+  </article>
+
+  <article class="orb" data-name="Foundations · The final product">
+    <div class="split2" style="grid-template-columns:.72fr 1.28fr">
+      <div>
+        <div class="sub">一合目 · The final product</div>
+        <h3 class="big rise">The whole workspace, <em>mapped</em></h3>
+        <p class="lede rise" style="--i:1">246 files and 1,362 connected pieces of code and documentation, drawn as one architecture map.</p>
+        <p class="also rise" style="--i:2">Also in this station — statistics from scratch · security code review · relational data with Pandas · Git recovery · regex engines · how computers store decimal numbers.</p>
+        <a class="link" href="../archify/repo-structure.html" target="_blank" data-cursor="Open">Open the interactive map <span>↗</span></a>
+      </div>
+      <figure class="shot tilt rise" data-zoom data-cursor="View">
+        <div class="frame" style="aspect-ratio:2048/1320"><img src="../archify/repo-structure.visual-check.2048x1320.dark.png" alt="Architecture map of the whole repository" /></div>
+      </figure>
+    </div>
+  </article>
+
+  <!-- ======== 02 GAME ARENA ======== -->
+  <article class="orb" id="arena" data-name="Game Arena" data-tick>
+    <div class="split2">
+      <div>
+        <div class="station"><span class="kanji">二合目</span><span class="dash"></span><span>Station 02 · Game Arena</span></div>
+        <h2 class="split">My first steps <em>inside a real team</em></h2>
+        <p class="lede rise">Game Arena is the platform where bots play matches against each other. It was the first time my code had to live next to everyone else's — and frontend was not my home turf as a data-science student.</p>
+      </div>
+      <div class="steps">
+        <div class="step rise"><small>The task</small><h3>Two buttons become one menu</h3><p>In the admin's Matches section, two separate buttons had to become a three-dot menu that opens a side panel.</p></div>
+        <div class="step rise" style="--i:1"><small>The reality</small><h3>“Simple” took a week</h3><p>First I had to understand the project, get it running with Docker, and learn Angular along the way.</p></div>
+        <div class="step rise" style="--i:2"><small>The pairing</small><h3>Bot-vs-bot temporary rooms</h3><p>A teammate built the backend, I built the frontend. Joining our branches gave us real Git conflicts — we solved them together.</p></div>
+        <div class="step rise" style="--i:3"><small>The result</small><h3>Approved, tested, merged</h3><p>Both changes passed the automated tests and went into the main branch.</p></div>
+      </div>
+    </div>
+  </article>
+
+  <article class="orb" data-name="Game Arena · The whiteboard">
+    <div class="split2" style="grid-template-columns:.7fr 1.3fr">
+      <div>
+        <div class="sub">二合目 · The whiteboard</div>
+        <h3 class="big rise">Drawing <em>before coding</em></h3>
+        <p class="lede rise" style="--i:1">We sketched the panel on the office whiteboards, compared ideas, and I adjusted the look and behaviour from the team's feedback. Software is not only typing.</p>
+      </div>
+      <div class="board rise" id="board" data-mode="before">
+        <div class="board-top"><b>Matches</b><div class="toggle"><button class="on" data-m="before" data-cursor="Before">before</button><button data-m="after" data-cursor="After">after</button></div></div>
+        <div class="wrow"><span>#1</span><span class="sq"></span><span class="sq"></span><span class="acts"><button class="wbtn">btn A</button><button class="wbtn">btn B</button><button class="dots3" data-cursor="Open">⋮</button></span></div>
+        <div class="wrow"><span>#2</span><span class="sq"></span><span class="sq"></span><span class="acts"><button class="wbtn">btn A</button><button class="wbtn">btn B</button><button class="dots3" data-cursor="Open">⋮</button></span></div>
+        <div class="wrow"><span>#3</span><span class="sq"></span><span class="sq"></span><span class="acts"><button class="wbtn">btn A</button><button class="wbtn">btn B</button><button class="dots3" data-cursor="Open">⋮</button></span></div>
+        <div class="wrow"><span>#4</span><span class="sq"></span><span class="sq"></span><span class="acts"><button class="wbtn">btn A</button><button class="wbtn">btn B</button><button class="dots3" data-cursor="Open">⋮</button></span></div>
+        <p style="font-size:22px;margin-top:14px;color:#c0392b" id="board-tip">← two loose buttons on every row</p>
+        <div class="drawer"><button class="x" data-cursor="Close">×</button><b>Match panel</b><p>Everything about the match, in one place.</p><p>Same actions as before:</p><span class="wbtn">action A</span><span class="wbtn">action B</span><p style="margin-top:10px;color:#1c7a52">+ matches the other sections ✓</p></div>
+      </div>
+    </div>
+  </article>
+
+  <article class="orb" data-name="Game Arena · 42 Tokyo">
+    <div class="sub">二合目 · Seeing it live at 42 Tokyo</div>
+    <div class="grid2">
+      <figure class="shot tilt rise slot" data-slot="photos/42-tokyo.jpg" data-cursor="View">
+        <div class="frame"><div class="ph"><b>42 Tokyo</b></div></div>
+        <figcaption class="cap"><div><b>From the office to 42 Tokyo</b><span>Watching other developers use what we built</span></div><i>↘</i></figcaption>
+      </figure>
+      <figure class="shot tilt rise slot" style="--i:1" data-slot="photos/game-arena-ui.png" data-cursor="View">
+        <div class="frame"><div class="ph"><b>⋮</b></div></div>
+        <figcaption class="cap"><div><b>The real thing</b><span>Angular · Docker · GitLab · pytest</span></div><i>↘</i></figcaption>
+      </figure>
+    </div>
+    <blockquote class="quote rise" style="--i:2">“A solution can work on its own. Its real value shows when it fits with everyone else's work.”<cite>What Game Arena taught me</cite></blockquote>
+  </article>
+
+  <!-- ======== 03 SUICA ======== -->
+  <article class="orb" id="suica" data-name="Suica NFC" data-tick>
+    <div class="split2">
+      <div>
+        <div class="station"><span class="kanji">三合目</span><span class="dash"></span><span>Station 03 · Transportation Expenses Extractor</span></div>
+        <h2 class="split">My train card <em>became a dataset</em></h2>
+        <p class="lede rise">A Suica card only remembers your last 20 trips. I tap mine on a small USB reader, and every ride — station, date, fare — lands in a spreadsheet and a dashboard, with station names I can actually read.</p>
+        <a class="link" href="../transportation/dashboard/index.html" target="_blank" data-cursor="Open">Open the live dashboard <span>↗</span></a>
+      </div>
+      <div class="rise" style="--i:1">
+        <div class="card3d tilt" data-cursor="Tap">
+          <div class="waves">)))</div>
+          <small>Suica · FeliCa · latest balance</small>
+          <div class="bal">¥<span data-count="2215">2,215</span></div>
+          <small>Tested with my real card in Tokyo</small>
+        </div>
+        <div class="flow"><div><b>Tap</b>USB NFC reader</div><div><b>Decode</b>raw bytes → trips</div><div><b>Translate</b>大宮 → Omiya</div><div><b>Report</b>Excel + web</div></div>
+      </div>
+    </div>
+  </article>
+
+  <article class="orb" data-name="Suica NFC · How it works">
+    <div class="sub">三合目 · What comes out of the card</div>
+    <div class="glass rise" style="padding:8px 10px 4px">
+      <table class="trips">
+        <tr><th>Date</th><th>Route</th><th>駅</th><th>Fare</th><th>Balance</th></tr>
+        <tr><td>Jul 07</td><td>Omiya → Urawa</td><td>大宮 → 浦和</td><td>−¥178</td><td>¥1,951</td></tr>
+        <tr><td>Jul 05</td><td>Kasukabe → Omiya</td><td>春日部 → 大宮</td><td>−¥324</td><td>¥2,215</td></tr>
+        <tr><td>Jul 04</td><td>Kitasenju → Kasukabe</td><td>北千住 → 春日部</td><td>gate</td><td>¥2,539</td></tr>
+      </table>
+    </div>
+    <div class="beats">
+      <article class="beat glass rise"><h4>How it works <span>01</span></h4><h3>The card speaks in 16-byte sentences</h3><p>Each trip is a tiny packed record. The program unpacks the date, the balance and two station codes, then looks the stations up in a table of every station in Japan.</p></article>
+      <article class="beat glass rise" style="--i:1"><h4>The hard part <span>02</span></h4><h3>The reader refused to talk</h3><p>Windows kept the Sony reader for itself. I had to swap its driver before Python could even see a card — my first fight with real hardware.</p></article>
+      <article class="beat glass rise" style="--i:2"><h4>Built with <span>03</span></h4><h3>Small tools, one pipeline</h3><div class="chips"><span class="chip">Python</span><span class="chip">nfcpy</span><span class="chip">Sony RC-S380</span><span class="chip">pykakasi</span><span class="chip">openpyxl</span><span class="chip">HTML dashboard</span><span class="chip">pytest</span></div><p style="margin-top:14px">Old scans are merged, so trips are never lost when the card forgets them.</p></article>
+    </div>
+  </article>
+
+  <!-- ======== 04 AI QUEST ======== -->
+  <article class="orb" id="ai" data-name="AI Quest" data-tick>
+    <div class="station"><span class="kanji">四合目</span><span class="dash"></span><span>Station 04 · AI Quest, parts I – IX</span></div>
+    <h2 class="split">From one neuron <em>to an agent</em></h2>
+    <p class="lede rise">Above the clouds. Nine experiments, each one built on the last: first a single artificial neuron written by hand, at the end a small assistant that reads files and does maths on my laptop.</p>
+    <div class="act-head rise" style="margin-top:26px"><b>壱</b><div><h3>No black boxes</h3><p>Before using any AI library, I wrote the neurons, the learning rule and the maths in plain Python — to see why one neuron can learn AND but needs friends to learn XOR.</p></div></div>
+    <div class="stats">
+      <div class="stat glass rise"><b><span data-count="96.67" data-dec="2">96.67</span>%</b><span>accuracy classifying iris flowers with a network written from scratch (29 of 30)</span></div>
+      <div class="stat glass rise" style="--i:1"><b><span data-count="229.87" data-dec="2">229.87</span>×</b><span>faster once the same maths runs on tensors instead of Python loops</span></div>
+      <div class="stat glass rise" style="--i:2"><b>Live</b><span>a visualizer that shows the network's connections changing while it learns</span></div>
+    </div>
+  </article>
+
+  <article class="orb" data-name="AI Quest · Act I">
+    <div class="sub">四合目 · Act 壱 · What the networks learned</div>
+    <div class="grid3">
+      <figure class="shot contain tilt rise" data-zoom data-cursor="View"><div class="frame" style="aspect-ratio:1"><img src="../ai_quest/parte_1/assets/plots/xor_trained_network.png" alt="XOR decision boundary" /></div><figcaption class="cap"><div><b>XOR, solved</b><span>What the network learned</span></div><i>↘</i></figcaption></figure>
+      <figure class="shot contain tilt rise" style="--i:1" data-zoom data-cursor="View"><div class="frame" style="aspect-ratio:1"><img src="../ai_quest/parte_1/assets/plots/iris_6_hidden_neurons.png" alt="Iris classifier" /></div><figcaption class="cap"><div><b>Iris flowers</b><span>Six hidden neurons</span></div><i>↘</i></figcaption></figure>
+      <figure class="shot tilt rise" style="--i:2" data-zoom data-cursor="View"><div class="frame" style="aspect-ratio:1;background:#0d1017"><img src="../ai_quest/part_3_visualizer/results/preview.png" alt="Neural visualizer" /></div><figcaption class="cap"><div><b>Live visualizer</b><span>Watching it think</span></div><i>↘</i></figcaption></figure>
+    </div>
+    <a class="link" href="../ai_quest/parte_1/presentation/AI_History_From_Rules_to_Learning.html" target="_blank" data-cursor="Open">Open my AI history deck <span>↗</span></a>
+  </article>
+
+  <article class="orb" data-name="AI Quest · Act II">
+    <div class="act-head rise"><b>弐</b><div><h3>Learning without a teacher</h3><p>Nobody tells a Flappy Bird the right answer. 150 birds per generation try, most crash, the best ones have children. Same idea for race cars on the Monaco circuit.</p></div></div>
+    <div class="two">
+      <figure class="shot contain tilt rise" data-zoom data-cursor="View"><div class="frame" style="aspect-ratio:1440/800"><img src="../ai_quest/part_2_flappy/assets/plots/champion_by_level.png" alt="Best bird per difficulty level" /></div><figcaption class="cap"><div><b>Evolving Flappy Birds</b><span>Which brain wins at each difficulty</span></div><i>↘</i></figcaption></figure>
+      <div>
+        <div class="stat glass rise"><b><span data-count="3337">3,337</span> m</b><span>of Monaco street circuit. Cars see the track through laser-like sensors and evolve from crashing at turn one to finishing laps — and I had to design the reward so they couldn't cheat by sliding sideways.</span></div>
+        <figure class="shot contain tilt rise" style="--i:1;margin-top:18px" data-zoom data-cursor="View"><div class="frame" style="aspect-ratio:1800/600"><img src="../ai_quest/part_2_flappy/results/ablation/curves.png" alt="Training curves" /></div><figcaption class="cap"><div><b>Controlled experiments</b><span>Population size vs. mutation rate</span></div><i>↘</i></figcaption></figure>
+      </div>
+    </div>
+    <a class="link" href="../ai_quest/part_2_flappy/presentation.html" target="_blank" data-cursor="Open">Open the Flappy results deck <span>↗</span></a>
+  </article>
+
+  <article class="orb" data-name="AI Quest · Act III">
+    <div class="act-head rise"><b>参</b><div><h3>“Is an LLM just a big autocomplete?”</h3><p>I built the pieces of a language model one by one — the tokenizer, a next-letter predictor, a small transformer — and finally gave a local model tools to act with.</p></div></div>
+    <div class="two">
+      <div class="term rise"><div class="bar"><i></i><i></i><i></i></div>
+        <p class="c" style="--i:0">// local model on my laptop: qwen2.5-coder:3b</p>
+        <p class="a" style="--i:1">1 → read_file("order.txt")</p><p class="r" style="--i:2">"17 units at $23.75 each, 12% discount"</p>
+        <p class="a" style="--i:3">2 → calculate("17 * 23.75")</p><p class="r" style="--i:4">403.75</p>
+        <p class="a" style="--i:5">3 → calculate("403.75 * 0.88")</p><p class="r" style="--i:6">355.3</p>
+        <p class="f" style="--i:7">✓ Total order cost is $355.30</p></div>
+      <div>
+        <div class="stat glass rise"><b><span data-count="15742">15,742</span></b><span>parameters in the transformer I wired by hand — attention included, no ready-made block.</span></div>
+        <article class="beat glass rise" style="--i:1;margin-top:14px"><h4>My answer <span>takeaway</span></h4><p style="font-size:16px;opacity:.95">“Predicting the next token” describes how it is trained — not everything it learned, nor the tools around it. And fluent text is never proof of truth: you have to test the system.</p></article>
+        <div class="chips rise" style="--i:2;margin-top:14px"><span class="chip">Python</span><span class="chip">PyTorch</span><span class="chip">Pygame</span><span class="chip">NEAT</span><span class="chip">Ollama</span><span class="chip">Matplotlib</span></div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ======== 05 LAUNCHER ======== -->
+  <article class="orb" id="launcher" data-name="Minimal Launcher" data-tick>
+    <div class="split2" style="grid-template-columns:.85fr 1.15fr">
+      <div>
+        <div class="station"><span class="kanji">五合目</span><span class="dash"></span><span>Station 05 · Minimal Android Launcher</span></div>
+        <h2 class="split">A phone that <em>gets out of the way</em></h2>
+        <p class="lede rise">The last project was the most personal: I replaced the home screen of my own Galaxy S24+. Black, white and one red accent. Every widget answers one question without opening an app.</p>
+        <a class="link" href="../android-launcher/docs/design/concept/Main.dc.html" target="_blank" data-cursor="Open">Open the design prototype <span>↗</span></a>
+      </div>
+      <div class="phones">
+        <a class="phone tilt rise" data-zoom data-cursor="View"><img src="../android-launcher/docs/design/app/inicio.png" alt="Home" /><span>Home</span></a>
+        <a class="phone tilt rise" style="--i:1" data-zoom data-cursor="View"><img src="../android-launcher/docs/design/app/cajon-apps.png" alt="App drawer" /><span>Drawer</span></a>
+        <a class="phone tilt rise" style="--i:2" data-zoom data-cursor="View"><img src="../android-launcher/docs/design/app/ejercicio-hoy.png" alt="Workout" /><span>Workout</span></a>
+        <a class="phone tilt rise" style="--i:3" data-zoom data-cursor="View"><img src="../android-launcher/docs/design/app/mundo.png" alt="World clock" /><span>MX ↔ Tokyo</span></a>
+      </div>
+    </div>
+  </article>
+
+  <article class="orb" data-name="Minimal Launcher · Inside">
+    <div class="sub">五合目 · What's inside the launcher</div>
+    <div class="beats" style="margin-top:0">
+      <article class="beat glass rise"><h4>The idea <span>01</span></h4><h3>The phone changes with the day</h3><p>Morning, Work and Night spaces. During work hours, games and entertainment are simply not on the screen — a little friction, on purpose.</p></article>
+      <article class="beat glass rise" style="--i:1"><h4>What's inside <span>02</span></h4><h3>My daily life as modules</h3><p>Workout, diet, finances, notes, backup, and a world clock that keeps Mexico City next to Tokyo. Banking apps stay hidden behind my fingerprint.</p></article>
+      <article class="beat glass rise" style="--i:2"><h4>Built with <span>03</span></h4><h3>Designed first, then built</h3><div class="chips"><span class="chip">Kotlin</span><span class="chip">Jetpack Compose</span><span class="chip">Android Studio</span><span class="chip">Biometric auth</span><span class="chip">Galaxy S24+</span></div><p style="margin-top:14px">Real screenshots, taken on my own phone.</p></article>
+    </div>
+  </article>
+
+  <!-- ======== REFLECTIONS ======== -->
+  <article class="orb" id="lessons" data-name="What I learned" data-tick>
+    <div class="station"><span class="kanji">八合目</span><span class="dash"></span><span>Station 08 · The thin air, before dawn</span></div>
+    <h2 class="split">What the mountain <em>taught me</em></h2>
+    <p class="lede rise">My first formal job, in another country, in another language. Some of it was steep.</p>
+    <div class="cols">
+      <article class="beat glass rise"><h4>Difficult <span>難</span></h4><h3>The steep parts</h3><ul><li>Angular and Docker, far from my data-science comfort zone</li><li>Real Git conflicts with a teammate's branch</li><li>Hardware that would not cooperate</li><li>Explaining my work every day, in English</li></ul></article>
+      <article class="beat glass rise" style="--i:1"><h4>Fun <span>楽</span></h4><h3>The views</h3><ul><li>Watching birds and race cars learn by themselves</li><li>Tapping my own Suica and seeing my trips appear</li><li>Seeing people use Game Arena at 42 Tokyo</li><li>Using my own launcher every single day</li></ul></article>
+      <article class="beat glass rise" style="--i:2"><h4>Learned <span>学</span></h4><h3>What I carry down</h3><ul><li>Understand before you build; test instead of hope</li><li>A sketch on a whiteboard can save a week</li><li>Feedback is part of the work, not a verdict on it</li><li>Communication takes effort from both sides</li></ul></article>
+    </div>
+  </article>
+
+  <article class="orb orb-quote" data-name="The lesson I take home">
+    <blockquote class="quote rise">“A good result does not depend only on what each person knows how to do, but on how we manage to work together.”<cite>The lesson I take home</cite></blockquote>
+  </article>
+</div>
+
+<!-- ============ REACT BITS <DitherVeil /> SAMURAI STAGE ============ -->
+<div id="dither-veil-container" class="dither-veil" aria-hidden="true"></div>
+
+<!-- ============ CENTERED INTRO TEXT OVER SEMI-OPAQUE SAMURAI ============ -->
+<div id="samurai-intro-overlay" aria-hidden="true">
+  <div class="eyebrow">Internship final presentation · Irvine Systems · Tokyo 2026</div>
+  <h1>From lines of code <em>to the summit</em></h1>
+  <div class="hero-meta">
+    <div><b>Presented by</b>Adrián Tavera Aquino</div>
+    <div><b>Studying</b>Data Science &amp; Mathematics Engineering · Tec de Monterrey</div>
+    <div><b>Route</b>5 projects · 1 mountain</div>
+  </div>
+</div>
+
+<!-- ============ 3D CIRCULAR CAROUSEL SURROUNDING THE SAMURAI HEAD ============ -->
+<div id="samurai-carousel-wrap" aria-label="3D Circular Washi Carousel around the Samurai">
+  <div id="samurai-carousel-canvas"></div>
+</div>
+
+<div id="index-ui">
+  <header class="stage-head"><h2><span class="kanji">参道</span>Selected Projects</h2></header>
+  <nav class="pnav" id="pnav">
+    <button data-i="0"><i>一</i>Foundations</button>
+    <button data-i="1"><i>二</i>Game Arena</button>
+    <button data-i="2"><i>三</i>Suica NFC</button>
+    <button data-i="3"><i>四</i>AI Quest</button>
+    <button data-i="4"><i>五</i>Launcher</button>
+    <button data-i="5"><i>頂</i>Life in Japan</button>
+  </nav>
+</div>
+
+<canvas id="motes"></canvas>
+<div id="fade"></div>
+<div id="grain"></div>
+
+<!-- ============ HUD ============ -->
+<a id="brand" class="hud" href="#hero" data-cursor="Top">adrián tavera<b>°</b></a>
+<nav id="nav" class="hud"><a href="#index">Index</a><a href="#foundations">Projects</a><a href="#summit">Life in Japan</a></nav>
+<div class="hero-jp" id="hero-jp">登山 — 富士山</div>
+<div class="hero-hint" id="hero-hint">Scroll to begin</div>
+<div id="cur"></div><div id="cur-ring"><span></span></div>
+
+<main>
+  <!-- 1. Initial Samurai <DitherVeil /> Screen -->
+  <section id="hero" aria-label="Samurai DitherVeil"></section>
+  <!-- 2. Centered Intro Text with Semi-Opaque Samurai in Background -->
+  <section id="hero-intro" aria-label="Presentation Title"></section>
+  <!-- 3. Washi Cards swept in by the wind surrounding the Samurai's head, then flying away on exit -->
+  <section id="index" aria-label="Selected Projects Ring"></section>
+  <!-- 4. The Climb (orbiting stations over photographic Mount Fuji depth layers) -->
+  <section id="climb" aria-hidden="true"></section>
+  <!-- 5. Summit (Drift Wall of Japan photos) -->
+  <section id="summit">
+    <div class="dw-pin">
+      <div class="drift-wall" id="dw"><div class="drift-wall__plane"></div></div>
+    </div>
+  </section>
+  <!-- 6. Thanks -->
+  <section id="thanks">
+    <div class="jp rise">ありがとうございました</div>
+    <h2 class="rise" style="--i:1">Thank you, Irvine Systems.</h2>
+    <p class="rise" style="--i:2">Adrián Tavera Aquino · Internship 2026 · Questions?</p>
+    <p class="credits rise" style="--i:3">Background photographs via Wikimedia Commons, cropped and split into layers — Lake Kawaguchi: Romain Guy (CC0) · Sea of clouds: Alpsdake (CC BY-SA 4.0) · Summit sunrise: Photos of Japan (CC0) · Summit torii: U.S. Navy / Sheryl Sullivan (public domain)</p>
+  </section>
+</main>
+
+<div id="lb"><img alt="" /></div>
+
+<script src="photos/samurai-assets.js"></script>
+<script src="photos/wall/manifest.js"></script>
+<script>
+(() => {
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v)), lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+const bell = (x, c, w) => Math.exp(-(((x - c) / w) ** 2));
+const fine = matchMedia('(hover:hover) and (pointer:fine)').matches;
+const docTop = el => { let y = 0; while (el) { y += el.offsetTop; el = el.offsetParent; } return y; };
+const DEG = Math.PI / 180;
+
+/* ============================================================================
+   1. REACT BITS <DitherVeil /> COMPONENT (EXACT WEBGL2 SHADERS & DIFFUSION)
+      Props:
+      pattern="floyd", pixelSize=1, inkColor="#120f17", paperColor="#f4f1ea",
+      revealRadius=180, softness=0.6, linger=1, rimColor="#000000", brightness=0.02
+   ============================================================================ */
+function mountDitherVeil(container, options = {}) {
+  const settings = {
+    src: options.src || window.SAMURAI_HERO_SRC || 'photos/samurai-hero.jpg',
+    fit: options.fit || 'contain',
+    pattern: options.pattern || 'floyd',
+    pixelSize: options.pixelSize ?? 1,
+    levels: options.levels ?? 2,
+    palette: options.palette || 'duotone',
+    inkColor: options.inkColor || '#120f17',
+    paperColor: options.paperColor || '#f4f1ea',
+    contrast: options.contrast ?? 1.15,
+    brightness: options.brightness ?? 0.02,
+    revealRadius: options.revealRadius ?? 180,
+    softness: options.softness ?? 0.6,
+    linger: options.linger ?? 1,
+    rimColor: options.rimColor || '#000000',
+    rim: options.rim ?? 0,
+    reverse: options.reverse ?? false,
+    wander: options.wander ?? true,
+    clickBurst: options.clickBurst ?? true
+  };
+
+  const ORDERED = { bayer: 0, noise: 1, lines: 2 };
+  const KERNELS = {
+    atkinson: [[1, 0, 1 / 8], [2, 0, 1 / 8], [-1, 1, 1 / 8], [0, 1, 1 / 8], [1, 1, 1 / 8], [0, 2, 1 / 8]],
+    floyd: [[1, 0, 7 / 16], [-1, 1, 3 / 16], [0, 1, 5 / 16], [1, 1, 1 / 16]]
+  };
+  const MASK_SCALE = 0.5, MAX_BURSTS = 4, BURST_SECONDS = 1.2, HOLD = 1.6, INTRO_MS = 1100;
+
+  const hexToRgb = hex => {
+    let h = String(hex || '').replace('#', '');
+    if (h.length === 3) h = h.replace(/./g, c => c + c);
+    const n = parseInt(h.slice(0, 6), 16);
+    return Number.isNaN(n) ? [0, 0, 0] : [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+  };
+
+  const fitScale = (w, h, iw, ih, contain) => {
+    const ratio = w / h / (iw / ih);
+    if (contain) return ratio > 1 ? [ratio, 1] : [1, 1 / ratio];
+    return ratio > 1 ? [1, 1 / ratio] : [ratio, 1];
+  };
+
+  const wanderAt = (t, w, h) => [
+    w * (0.5 + 0.24 * Math.sin(t * 0.53) + 0.06 * Math.sin(t * 1.31 + 0.6)),
+    h * (0.5 + 0.22 * Math.sin(t * 0.71 + 1.1) + 0.06 * Math.cos(t * 1.57))
+  ];
+
+  const measureEdge = (context, image) => {
+    const size = 32;
+    context.canvas.width = size;
+    context.canvas.height = size;
+    context.drawImage(image, 0, 0, size, size);
+    const data = context.getImageData(0, 0, size, size).data;
+    const sum = [0, 0, 0], squares = [0, 0, 0];
+    let count = 0;
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        if (x > 0 && y > 0 && x < size - 1 && y < size - 1) continue;
+        for (let c = 0; c < 3; c++) {
+          const v = data[(y * size + x) * 4 + c] / 255;
+          sum[c] += v;
+          squares[c] += v * v;
+        }
+        count++;
+      }
+    }
+    const matte = [sum[0] / count, sum[1] / count, sum[2] / count];
+    const spread = matte.reduce((total, mean, c) => total + Math.sqrt(Math.max(0, squares[c] / count - mean * mean)), 0) / 3;
+    return { matte, plain: spread < 0.06 };
+  };
+
+  const diffuse = (pixels, cols, rows, kernel, levels, rgb, grade) => {
+    const channels = rgb ? 3 : 1;
+    const values = new Float32Array(cols * rows * channels);
+    for (let i = 0; i < cols * rows; i++) {
+      const r = pixels[i * 4] / 255, g = pixels[i * 4 + 1] / 255, b = pixels[i * 4 + 2] / 255;
+      if (rgb) {
+        values[i * 3] = grade(r);
+        values[i * 3 + 1] = grade(g);
+        values[i * 3 + 2] = grade(b);
+      } else {
+        values[i] = grade(0.2126 * r + 0.7152 * g + 0.0722 * b);
+      }
+    }
+    const steps = levels - 1;
+    const out = new Uint8Array(cols * rows * 4);
+    for (let y = 0; y < rows; y++) {
+      const dir = y & 1 ? -1 : 1;
+      for (let i = 0; i < cols; i++) {
+        const x = dir > 0 ? i : cols - 1 - i;
+        const p = y * cols + x;
+        for (let c = 0; c < channels; c++) {
+          const old = values[p * channels + c];
+          const q = Math.min(steps, Math.max(0, Math.round(old * steps))) / steps;
+          const err = old - q;
+          const byte = Math.round(q * 255);
+          if (rgb) out[p * 4 + c] = byte;
+          else out[p * 4] = out[p * 4 + 1] = out[p * 4 + 2] = byte;
+          for (let k = 0; k < kernel.length; k++) {
+            const nx = x + kernel[k][0] * dir, ny = y + kernel[k][1];
+            if (nx < 0 || nx >= cols || ny >= rows) continue;
+            values[(ny * cols + nx) * channels + c] += err * kernel[k][2];
+          }
+        }
+        out[p * 4 + 3] = 255;
+      }
+    }
+    return out;
+  };
+
+  const canvas = document.createElement('canvas');
+  canvas.style.display = 'block';
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  container.appendChild(canvas);
+
+  const gl = canvas.getContext('webgl2', { alpha: false, antialias: false });
+  if (!gl) return { wake: () => {} };
+
+  const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+  const floatMask = !!gl.getExtension('EXT_color_buffer_float');
+
+  const vertexSrc = `#version 300 es
+  in vec2 position;
+  in vec2 uv;
+  out vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = vec4(position, 0.0, 1.0);
+  }`;
+
+  const maskFragmentSrc = `#version 300 es
+  precision highp float;
+  uniform sampler2D tPrev;
+  uniform vec2 uSize;
+  uniform vec2 uFrom;
+  uniform vec2 uTo;
+  uniform float uRadius;
+  uniform float uSoftness;
+  uniform float uStrength;
+  uniform float uFade;
+  uniform float uHold;
+  in vec2 vUv;
+  out vec4 fragColor;
+  float strokeDistance(vec2 p, vec2 a, vec2 b) {
+    vec2 ab = b - a;
+    float h = clamp(dot(p - a, ab) / max(dot(ab, ab), 0.0001), 0.0, 1.0);
+    return length(p - a - ab * h);
+  }
+  void main() {
+    vec2 p = vec2(vUv.x, 1.0 - vUv.y) * uSize;
+    float trail = max(texture(tPrev, vUv).r - uFade, 0.0);
+    float band = max(uRadius * uSoftness, 1.0) * uHold;
+    float d = strokeDistance(p, uFrom, uTo);
+    trail = max(trail, clamp((uRadius - d) / band, 0.0, 1.0) * uStrength);
+    fragColor = vec4(trail, 0.0, 0.0, 1.0);
+  }`;
+
+  const viewFragmentSrc = `#version 300 es
+  precision highp float;
+  precision highp int;
+  uniform sampler2D tImage;
+  uniform sampler2D tMask;
+  uniform sampler2D tDiffused;
+  uniform vec2 uResolution;
+  uniform vec2 uCover;
+  uniform float uLod;
+  uniform float uCell;
+  uniform int uPattern;
+  uniform int uPalette;
+  uniform float uLevels;
+  uniform vec3 uInk;
+  uniform vec3 uPaper;
+  uniform vec3 uRimColor;
+  uniform float uRim;
+  uniform float uContrast;
+  uniform float uBrightness;
+  uniform float uReverse;
+  uniform float uIntro;
+  uniform float uHold;
+  uniform vec3 uMatte;
+  uniform float uKey;
+  uniform vec2 uSize;
+  uniform vec4 uBursts[4];
+  uniform float uBurstWidth;
+  in vec2 vUv;
+  out vec4 fragColor;
+
+  float bayer(vec2 cell) {
+    ivec2 p = ivec2(mod(cell, 8.0));
+    int v = p.x ^ p.y;
+    int m = ((v & 1) << 5) | ((p.y & 1) << 4) | ((v & 2) << 2) | ((p.y & 2) << 1) | ((v & 4) >> 1) | ((p.y & 4) >> 2);
+    return (float(m) + 0.5) / 64.0;
+  }
+  vec2 imageUv(vec2 uv) { return (uv - 0.5) * uCover + 0.5; }
+  float within(vec2 p) {
+    vec2 s = step(vec2(0.0), p) * step(p, vec2(1.0));
+    return s.x * s.y;
+  }
+  vec3 grade(vec3 c) {
+    return pow(clamp((c - 0.5) * uContrast + 0.5 + uBrightness, 0.0, 1.0), vec3(1.6));
+  }
+  float shockwave(vec2 p) {
+    float value = 0.0;
+    for (int i = 0; i < 4; i++) {
+      vec4 burst = uBursts[i];
+      if (burst.w <= 0.0) continue;
+      float offset = distance(p, burst.xy) - burst.z;
+      float edge = offset > 0.0 ? offset / (uBurstWidth * 0.35) : -offset / uBurstWidth;
+      value = max(value, clamp(1.0 - edge, 0.0, 1.0) * burst.w);
+    }
+    return value;
+  }
+  vec3 toned(vec3 c) {
+    return uPalette == 1 ? grade(c) : grade(vec3(dot(c, vec3(0.2126, 0.7152, 0.0722))));
+  }
+  vec3 quantize(vec3 v, float t) {
+    float steps = max(uLevels - 1.0, 1.0);
+    vec3 s = v * steps;
+    vec3 base = floor(s);
+    return min(base + step(vec3(t), s - base), vec3(steps)) / steps;
+  }
+  void main() {
+    vec2 px = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
+    vec2 cell = floor(px / uCell);
+    vec2 center = (cell + 0.5) * uCell;
+    vec2 cellUv = vec2(center.x / uResolution.x, 1.0 - center.y / uResolution.y);
+
+    vec2 sampleUv = imageUv(cellUv);
+    float framed = within(sampleUv);
+    vec3 level;
+    if (uPattern == 3) {
+      level = texelFetch(tDiffused, ivec2(cell), 0).rgb;
+    } else {
+      vec3 c = mix(uMatte, textureLod(tImage, sampleUv, uLod).rgb, framed);
+      level = quantize(toned(c), bayer(cell));
+    }
+
+    vec3 color = mix(uInk, mix(uInk, uPaper, level), max(framed, uKey));
+    vec3 backdrop = mix(uInk, uPaper, toned(uMatte));
+    vec2 photoUv = imageUv(vUv);
+    vec3 raw = texture(tImage, photoUv).rgb;
+    float plain = uKey * (1.0 - smoothstep(0.05, 0.22, distance(raw, uMatte)));
+    vec3 photo = mix(mix(uInk, backdrop, uKey), mix(raw, backdrop, plain), within(photoUv));
+
+    vec2 point = vec2(cellUv.x, 1.0 - cellUv.y) * uSize;
+    float mask = max(clamp(texture(tMask, cellUv).r * uHold, 0.0, 1.0), shockwave(point));
+    float shown = mix(mask, 1.0 - mask, uReverse);
+    float order = bayer(cell.yx);
+    float low = order * (1.0 - uRim);
+    color = mix(color, uRimColor, step(low, shown) * step(0.001, uRim));
+    color = mix(color, photo, step(low + uRim, shown));
+
+    vec2 aspect = vec2(uResolution.x / uResolution.y, 1.0);
+    float spread = length((cellUv - 0.5) * aspect) / length(aspect * 0.5);
+    float appear = step(spread * 0.72 + bayer(cell + vec2(3.0, 5.0)) * 0.28, uIntro * 1.001);
+    fragColor = vec4(mix(uInk, color, appear), 1.0);
+  }`;
+
+  const compile = (type, src) => {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
+  };
+  const createProg = fragSrc => {
+    const p = gl.createProgram();
+    gl.attachShader(p, compile(gl.VERTEX_SHADER, vertexSrc));
+    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fragSrc));
+    gl.linkProgram(p);
+    return p;
+  };
+
+  const maskProg = createProg(maskFragmentSrc);
+  const viewProg = createProg(viewFragmentSrc);
+
+  // Fullscreen Triangle VAO
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  const posBuf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+  const uvBuf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, uvBuf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 2, 0, 0, 2]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(1);
+  gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);
+
+  const imageTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, imageTex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([18, 15, 23, 255]));
+
+  const diffusedTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, diffusedTex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255]));
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  const createMaskTarget = (w, h) => {
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, floatMask ? gl.RGBA16F : gl.RGBA, w, h, 0, gl.RGBA, floatMask ? gl.HALF_FLOAT : gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const fb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return { fb, tex, width: w, height: h };
+  };
+
+  let masks = [createMaskTarget(2, 2), createMaskTarget(2, 2)];
+  const sampler = document.createElement('canvas');
+  const samplerCtx = sampler.getContext('2d', { willReadFrequently: true });
+
+  let image = null, introStart = 0, diffusedKey = '', diffusionBlocked = false;
+  let width = 1, height = 1, raf = 0, last = performance.now(), trailUntil = 0, presence = 0, drift = 0;
+  let matte = [0.07, 0.06, 0.09], keyPlain = 1, cover = [1, 1];
+  const pointer = { x: 0, y: 0, inside: false, fresh: true, placed: false };
+  const brush = { x: 0, y: 0, px: 0, py: 0 };
+  const bursts = [];
+
+  const applyLayout = () => {
+    width = Math.max(1, container.clientWidth);
+    height = Math.max(1, container.clientHeight);
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    const mw = Math.max(2, Math.round(width * MASK_SCALE));
+    const mh = Math.max(2, Math.round(height * MASK_SCALE));
+    if (mw !== masks[0].width || mh !== masks[0].height) {
+      masks.forEach(m => { gl.deleteFramebuffer(m.fb); gl.deleteTexture(m.tex); });
+      masks = [createMaskTarget(mw, mh), createMaskTarget(mw, mh)];
+    }
+    if (!pointer.placed) { pointer.x = width / 2; pointer.y = height / 2; }
+  };
+
+  const updateDiffusion = cell => {
+    if (!image || !samplerCtx) return;
+    const cols = Math.ceil(canvas.width / cell);
+    const rows = Math.ceil(canvas.height / cell);
+    const key = [settings.pattern, settings.levels, cols, rows, canvas.width, canvas.height].join('|');
+    if (key === diffusedKey) return;
+    diffusedKey = key;
+
+    const [cx, cy] = cover;
+    const iw = image.naturalWidth, ih = image.naturalHeight;
+    sampler.width = cols;
+    sampler.height = rows;
+    samplerCtx.fillStyle = `rgb(${matte[0] * 255}, ${matte[1] * 255}, ${matte[2] * 255})`;
+    samplerCtx.fillRect(0, 0, cols, rows);
+
+    const sx = (0.5 - 0.5 * cx) * iw, sy = (0.5 - 0.5 * cy) * ih;
+    const sw = ((cols * cell) / canvas.width) * cx * iw, sh = ((rows * cell) / canvas.height) * cy * ih;
+    const x0 = Math.max(sx, 0), y0 = Math.max(sy, 0);
+    const x1 = Math.min(sx + sw, iw), y1 = Math.min(sy + sh, ih);
+    if (x1 > x0 && y1 > y0) {
+      samplerCtx.drawImage(image, x0, y0, x1 - x0, y1 - y0, ((x0 - sx) / sw) * cols, ((y0 - sy) / sh) * rows, ((x1 - x0) / sw) * cols, ((y1 - y0) / sh) * rows);
+    }
+    const grade = v => Math.pow(Math.min(1, Math.max(0, (v - 0.5) * settings.contrast + 0.5 + settings.brightness)), 1.6);
+    const pixels = samplerCtx.getImageData(0, 0, cols, rows).data;
+    const out = diffuse(pixels, cols, rows, KERNELS[settings.pattern], settings.levels, false, grade);
+    gl.bindTexture(gl.TEXTURE_2D, diffusedTex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, cols, rows, 0, gl.RGBA, gl.UNSIGNED_BYTE, out);
+  };
+
+  const renderFrame = now => {
+    raf = 0;
+    if (container.style.visibility === 'hidden') return;
+    const dt = Math.min(0.05, Math.max(0, (now - last) / 1000));
+    last = now;
+
+    let targetX = pointer.x, targetY = pointer.y;
+    if (!pointer.inside && settings.wander) {
+      drift = Math.min(1, drift + dt / 1.2);
+      const [wx, wy] = wanderAt(now / 1000, width, height);
+      const k = drift * drift * (3 - 2 * drift);
+      targetX += (wx - targetX) * k;
+      targetY += (wy - targetY) * k;
+    } else {
+      drift = 0;
+    }
+
+    presence += ((pointer.inside || settings.wander ? 1 : 0) - presence) * (1 - Math.exp(-dt / 0.16));
+    if (pointer.fresh) {
+      brush.x = brush.px = targetX;
+      brush.y = brush.py = targetY;
+      pointer.fresh = false;
+    } else {
+      const follow = 1 - Math.exp(-dt / 0.035);
+      brush.x += (targetX - brush.x) * follow;
+      brush.y += (targetY - brush.y) * follow;
+    }
+
+    const burstFlat = new Float32Array(16);
+    for (let i = bursts.length - 1; i >= 0; i--) {
+      if ((now - bursts[i].start) / 1000 >= BURST_SECONDS) bursts.splice(i, 1);
+    }
+    const burstWidth = Math.max(60, settings.revealRadius * 0.9);
+    bursts.forEach((b, i) => {
+      const k = Math.max(0, (now - b.start) / 1000 / BURST_SECONDS);
+      const reach = Math.hypot(Math.max(b.x, width - b.x), Math.max(b.y, height - b.y)) + burstWidth;
+      burstFlat[i * 4] = b.x;
+      burstFlat[i * 4 + 1] = b.y;
+      burstFlat[i * 4 + 2] = reach * Math.sin((k * Math.PI) / 2);
+      burstFlat[i * 4 + 3] = 1 - k * k * k;
+    });
+
+    if (presence > 0.002) trailUntil = now + settings.linger * 1000 + 150;
+
+    // 1. Render Mask Trail Pass
+    gl.bindFramebuffer(gl.FRAMEBUFFER, masks[1].fb);
+    gl.viewport(0, 0, masks[1].width, masks[1].height);
+    gl.useProgram(maskProg);
+    gl.bindVertexArray(vao);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, masks[0].tex);
+    gl.uniform1i(gl.getUniformLocation(maskProg, 'tPrev'), 0);
+    gl.uniform2f(gl.getUniformLocation(maskProg, 'uSize'), width, height);
+    gl.uniform2f(gl.getUniformLocation(maskProg, 'uFrom'), brush.px, brush.py);
+    gl.uniform2f(gl.getUniformLocation(maskProg, 'uTo'), brush.x, brush.y);
+    gl.uniform1f(gl.getUniformLocation(maskProg, 'uRadius'), settings.revealRadius * (0.45 + 0.55 * presence));
+    gl.uniform1f(gl.getUniformLocation(maskProg, 'uSoftness'), settings.softness);
+    gl.uniform1f(gl.getUniformLocation(maskProg, 'uStrength'), presence);
+    const minFade = floatMask ? 0 : 1.5 / 255;
+    gl.uniform1f(gl.getUniformLocation(maskProg, 'uFade'), Math.max(settings.linger > 0 ? dt / settings.linger : 1, minFade));
+    gl.uniform1f(gl.getUniformLocation(maskProg, 'uHold'), HOLD);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    masks.reverse();
+    brush.px = brush.x;
+    brush.py = brush.y;
+
+    // 2. Update Error-Diffusion Dither Texture if needed
+    const cell = Math.max(1, Math.round(settings.pixelSize * dpr));
+    if (image) {
+      cover = fitScale(canvas.width, canvas.height, image.naturalWidth, image.naturalHeight, settings.fit === 'contain');
+    }
+    let patternIndex = ORDERED[settings.pattern] ?? 0;
+    if (KERNELS[settings.pattern] && image && !diffusionBlocked) {
+      try {
+        updateDiffusion(cell);
+        patternIndex = 3;
+      } catch {
+        diffusionBlocked = true;
+      }
+    }
+
+    // 3. Render Main View Pass
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.useProgram(viewProg);
+    gl.bindVertexArray(vao);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, imageTex);
+    gl.uniform1i(gl.getUniformLocation(viewProg, 'tImage'), 0);
+
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, masks[0].tex);
+    gl.uniform1i(gl.getUniformLocation(viewProg, 'tMask'), 1);
+
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, diffusedTex);
+    gl.uniform1i(gl.getUniformLocation(viewProg, 'tDiffused'), 2);
+
+    const texelsPerPixel = image ? (cover[0] * image.naturalWidth) / canvas.width : 1;
+    const intro = image ? Math.min(1, (now - introStart) / INTRO_MS) : 0;
+
+    gl.uniform2f(gl.getUniformLocation(viewProg, 'uResolution'), canvas.width, canvas.height);
+    gl.uniform2f(gl.getUniformLocation(viewProg, 'uCover'), cover[0], cover[1]);
+    gl.uniform1f(gl.getUniformLocation(viewProg, 'uLod'), Math.log2(Math.max(cell * texelsPerPixel, 1)));
+    gl.uniform1f(gl.getUniformLocation(viewProg, 'uCell'), cell);
+    gl.uniform1i(gl.getUniformLocation(viewProg, 'uPattern'), patternIndex);
+    gl.uniform1i(gl.getUniformLocation(viewProg, 'uPalette'), 0);
+    gl.uniform1f(gl.getUniformLocation(viewProg, 'uLevels'), settings.levels);
+    gl.uniform3fv(gl.getUniformLocation(viewProg, 'uInk'), hexToRgb(settings.inkColor));
+    gl.uniform3fv(gl.getUniformLocation(viewProg, 'uPaper'), hexToRgb(settings.paperColor));
+    gl.uniform3fv(gl.getUniformLocation(viewProg, 'uRimColor'), hexToRgb(settings.rimColor));
+    gl.uniform1f(gl.getUniformLocation(viewProg, 'uRim'), settings.rim);
+    gl.uniform1f(gl.getUniformLocation(viewProg, 'uContrast'), settings.contrast);
+    gl.uniform1f(gl.getUniformLocation(viewProg, 'uBrightness'), settings.brightness);
+    gl.uniform1f(gl.getUniformLocation(viewProg, 'uReverse'), settings.reverse ? 1 : 0);
+    gl.uniform1f(gl.getUniformLocation(viewProg, 'uIntro'), 1 - Math.pow(1 - intro, 2));
+    gl.uniform1f(gl.getUniformLocation(viewProg, 'uHold'), HOLD);
+    gl.uniform3fv(gl.getUniformLocation(viewProg, 'uMatte'), matte);
+    gl.uniform1f(gl.getUniformLocation(viewProg, 'uKey'), keyPlain);
+    gl.uniform2f(gl.getUniformLocation(viewProg, 'uSize'), width, height);
+    gl.uniform4fv(gl.getUniformLocation(viewProg, 'uBursts'), burstFlat);
+    gl.uniform1f(gl.getUniformLocation(viewProg, 'uBurstWidth'), burstWidth);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    const busy = pointer.inside || settings.wander || presence > 0.002 || bursts.length > 0 || now < trailUntil || (image && intro < 1);
+    if (busy && container.style.visibility !== 'hidden') {
+      raf = requestAnimationFrame(renderFrame);
+    }
+  };
+
+  const wake = () => {
+    if (raf || container.style.visibility === 'hidden') return;
+    last = performance.now();
+    raf = requestAnimationFrame(renderFrame);
+  };
+
+  const img = new Image();
+  img.onload = () => {
+    image = img;
+    gl.bindTexture(gl.TEXTURE_2D, imageTex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    try {
+      const edge = measureEdge(samplerCtx, img);
+      matte = edge.matte;
+      keyPlain = edge.plain ? 1 : 0;
+    } catch {}
+    introStart = performance.now();
+    applyLayout();
+    wake();
+  };
+  img.src = settings.src;
+
+  window.addEventListener('pointermove', e => {
+    const rect = container.getBoundingClientRect();
+    pointer.x = e.clientX - rect.left;
+    pointer.y = e.clientY - rect.top;
+    pointer.placed = true;
+    if (!pointer.inside) { pointer.inside = true; pointer.fresh = true; }
+    wake();
+  }, { passive: true });
+
+  window.addEventListener('pointerdown', e => {
+    if (!settings.clickBurst || container.style.visibility === 'hidden') return;
+    const rect = container.getBoundingClientRect();
+    bursts.push({ x: e.clientX - rect.left, y: e.clientY - rect.top, start: performance.now() });
+    if (bursts.length > MAX_BURSTS) bursts.shift();
+    wake();
+  }, { passive: true });
+
+  window.addEventListener('resize', () => {
+    diffusedKey = '';
+    applyLayout();
+    wake();
+  });
+
+  applyLayout();
+  wake();
+  return { wake };
+}
+
+const ditherVeilEl = $('#dither-veil-container');
+const ditherVeilInstance = mountDitherVeil(ditherVeilEl, {
+  src: window.SAMURAI_HERO_SRC || 'photos/samurai-hero.jpg',
+  pattern: 'floyd',
+  pixelSize: 1,
+  inkColor: '#120f17',
+  paperColor: '#f4f1ea',
+  revealRadius: 180,
+  softness: 0.6,
+  linger: 1,
+  rimColor: '#000000',
+  brightness: 0.02
+});
+
+/* ============================================================================
+   2. 3D CIRCULAR CAROUSEL OF BENDABLE WASHI CARDS SURROUNDING THE SAMURAI HEAD
+   ============================================================================ */
+const PROJECTS = [
+  { id: '01', title: 'Foundations', kanji: '一合', subKanji: '水墨の基礎・壱', year: '2026', borderStyle: 'seigaiha', brushType: 'enso_dragon', target: '#foundations' },
+  { id: '02', title: 'Game Arena', kanji: '二合', subKanji: '共創の闘技・弐', year: '2026', borderStyle: 'asanoha', brushType: 'wind_strokes', target: '#arena' },
+  { id: '03', title: 'Suica NFC', kanji: '三合', subKanji: '交通の記録・参', year: '2026', borderStyle: 'kikkou', brushType: 'vertical_poem', target: '#suica' },
+  { id: '04', title: 'AI Quest', kanji: '四合', subKanji: '知能の探求・肆', year: '2026', borderStyle: 'seigaiha', brushType: 'moon_crest', target: '#ai' },
+  { id: '05', title: 'Launcher', kanji: '五合', subKanji: '静寂の起動・伍', year: '2026', borderStyle: 'asanoha', brushType: 'enso_dragon', target: '#launcher' },
+  { id: '06', title: 'Life in Japan', kanji: '山頂', subKanji: '感謝と記憶・陸', year: '2026', borderStyle: 'kikkou', brushType: 'wind_strokes', target: '#summit' }
+];
+
+let cScene, cCamera, cRenderer, samuraiDepthMesh;
+let cardMeshes = [];
+const NC = PROJECTS.length;
+const ANGLE_STEP = (Math.PI * 2) / NC;
+const RING_RADIUS = 3.55;
+const RING_CENTER_Z = -1.65;
+
+const cMouse = new THREE.Vector2(0, 0);
+const cTargetMouse = new THREE.Vector2(0, 0);
+const cRaycaster = new THREE.Raycaster();
+let hoveredCardIdx = -1;
+let ringFloatCurrent = 0;
+let ringVelocity = 0;
+let isRingDragging = false;
+let dragStartX = 0, dragStartYScroll = 0, dragDist = 0;
+
+function createWashiCardTextures(project) {
+  const width = 640, height = 900;
+  const colorCanvas = document.createElement('canvas');
+  colorCanvas.width = width; colorCanvas.height = height;
+  const ctx = colorCanvas.getContext('2d');
+
+  const dataCanvas = document.createElement('canvas');
+  dataCanvas.width = width; dataCanvas.height = height;
+  const dCtx = dataCanvas.getContext('2d');
+
+  ctx.fillStyle = '#F4F1EA';
+  ctx.fillRect(0, 0, width, height);
+  dCtx.fillStyle = 'rgb(90, 0, 0)';
+  dCtx.fillRect(0, 0, width, height);
+
+  for (let i = 0; i < 40; i++) {
+    const x = Math.random() * width, y = Math.random() * height, r = 50 + Math.random() * 140;
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+    grad.addColorStop(0, Math.random() > 0.5 ? 'rgba(232, 224, 208, 0.22)' : 'rgba(252, 250, 245, 0.25)');
+    grad.addColorStop(1, 'rgba(244, 241, 234, 0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, width, height);
+  }
+
+  for (let f = 0; f < 240; f++) {
+    const fx = Math.random() * width, fy = Math.random() * height;
+    const len = 12 + Math.random() * 36, angle = Math.random() * Math.PI * 2;
+    const curve = (Math.random() - 0.5) * 16;
+    const ex = fx + Math.cos(angle) * len, ey = fy + Math.sin(angle) * len;
+    const cx = (fx + ex) * 0.5 - Math.sin(angle) * curve, cy = (fy + ey) * 0.5 + Math.cos(angle) * curve;
+    ctx.beginPath();
+    ctx.moveTo(fx, fy);
+    ctx.quadraticCurveTo(cx, cy, ex, ey);
+    ctx.lineWidth = 0.6 + Math.random() * 0.9;
+    ctx.strokeStyle = Math.random() > 0.35 ? 'rgba(255, 253, 248, 0.55)' : 'rgba(210, 198, 178, 0.35)';
+    ctx.stroke();
+  }
+
+  const inkCanvas = document.createElement('canvas');
+  inkCanvas.width = width; inkCanvas.height = height;
+  const iCtx = inkCanvas.getContext('2d');
+  iCtx.save();
+  iCtx.scale(width / 1024, height / 1440);
+  drawJapaneseFrame(iCtx, 1024, 1440, project.borderStyle);
+  drawSumiCalligraphyAndArt(iCtx, 1024, 1440, project);
+  iCtx.restore();
+
+  ctx.save();
+  ctx.filter = 'blur(2.2px)';
+  ctx.globalAlpha = 0.25;
+  ctx.drawImage(inkCanvas, 0, 0);
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalAlpha = 0.96;
+  ctx.drawImage(inkCanvas, 0, 0);
+  ctx.restore();
+
+  ctx.save();
+  ctx.scale(width / 1024, height / 1440);
+  drawHankoSeal(ctx, 1024 - 195, 1440 - 225, project.id);
+  ctx.restore();
+
+  dCtx.drawImage(inkCanvas, 0, 0);
+
+  const colorTex = new THREE.CanvasTexture(colorCanvas);
+  colorTex.anisotropy = 4;
+  const dataTex = new THREE.CanvasTexture(dataCanvas);
+  dataTex.anisotropy = 2;
+  return { colorTex, dataTex };
+}
+
+function drawJapaneseFrame(ctx, w, h, style) {
+  const margin = 64, band = 56;
+  const innerX = margin + band, innerY = margin + band;
+  const innerW = w - (margin + band) * 2, innerH = h - (margin + band) * 2;
+  ctx.save();
+  ctx.strokeStyle = '#0c0c0e'; ctx.fillStyle = '#0c0c0e';
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.lineWidth = 5.5; ctx.strokeRect(margin, margin, w - margin * 2, h - margin * 2);
+  ctx.lineWidth = 2.2; ctx.strokeRect(margin + 10, margin + 10, w - (margin + 10) * 2, h - (margin + 10) * 2);
+  ctx.lineWidth = 4.5; ctx.strokeRect(innerX, innerY, innerW, innerH);
+  ctx.lineWidth = 1.8; ctx.strokeRect(innerX - 8, innerY - 8, innerW + 16, innerH + 16);
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(margin + 10, margin + 10, w - (margin + 10) * 2, h - (margin + 10) * 2);
+  ctx.rect(innerX - 8, innerY - 8, innerW + 16, innerH + 16);
+  ctx.clip('evenodd');
+
+  if (style === 'seigaiha') {
+    const r = 34;
+    for (let row = 0; row < h / (r * 0.5) + 2; row++) {
+      const y = row * (r * 0.52), offsetX = (row % 2) * r;
+      for (let col = -1; col < w / (r * 2) + 2; col++) {
+        const x = col * (r * 2) + offsetX;
+        ctx.beginPath(); ctx.arc(x, y, r, Math.PI, 0); ctx.fillStyle = '#F4F1EA'; ctx.fill();
+        for (let ring = 1; ring <= 3; ring++) {
+          ctx.beginPath(); ctx.arc(x, y, (r / 3) * ring, Math.PI, 0);
+          ctx.lineWidth = ring === 3 ? 3.2 : 2.0; ctx.strokeStyle = '#0c0c0e'; ctx.stroke();
+        }
+      }
+    }
+  } else if (style === 'asanoha') {
+    const step = 48; ctx.lineWidth = 2.1;
+    for (let y = 0; y <= h + step; y += step) {
+      for (let x = 0; x <= w + step; x += step) {
+        const cx = x + ((Math.round(y / step) % 2) * step * 0.5), cy = y;
+        for (let a = 0; a < 6; a++) {
+          const rad = (a * Math.PI) / 3;
+          ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(rad) * step * 0.58, cy + Math.sin(rad) * step * 0.58); ctx.stroke();
+        }
+        ctx.strokeRect(x - step * 0.5, y - step * 0.5, step, step);
+      }
+    }
+  } else {
+    const r = 28, dx = r * 1.732, dy = r * 1.5; ctx.lineWidth = 2.4;
+    for (let row = 0; row < h / dy + 2; row++) {
+      for (let col = 0; col < w / dx + 2; col++) {
+        const cx = col * dx + (row % 2) * (dx * 0.5), cy = row * dy;
+        for (const sc of [0.92, 0.55]) {
+          ctx.beginPath();
+          for (let i = 0; i < 6; i++) {
+            const ang = (Math.PI / 3) * i + Math.PI / 6;
+            const px = cx + r * sc * Math.cos(ang), py = cy + r * sc * Math.sin(ang);
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          }
+          ctx.closePath(); ctx.stroke();
+        }
+      }
+    }
+  }
+  ctx.restore();
+
+  const corner = (x, y, sx, sy) => {
+    ctx.save(); ctx.translate(x, y); ctx.scale(sx, sy);
+    ctx.fillStyle = '#F4F1EA'; ctx.strokeStyle = '#0c0c0e'; ctx.lineWidth = 4.2;
+    ctx.beginPath(); ctx.moveTo(-12, -12); ctx.lineTo(115, -12);
+    ctx.bezierCurveTo(125, 12, 95, 28, 72, 18); ctx.bezierCurveTo(85, 42, 55, 58, 36, 40);
+    ctx.bezierCurveTo(54, 66, 38, 92, 16, 76); ctx.bezierCurveTo(24, 102, 4, 124, -12, 112);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  };
+  corner(innerX + 8, innerY + 8, 1, 1);
+  corner(innerX + innerW - 8, innerY + 8, -1, 1);
+  corner(innerX + 8, innerY + innerH - 8, 1, -1);
+  corner(innerX + innerW - 8, innerY + innerH - 8, -1, -1);
+  ctx.restore();
+}
+
+function drawSumiCalligraphyAndArt(ctx, w, h, project) {
+  ctx.save();
+  ctx.fillStyle = '#09090b'; ctx.strokeStyle = '#09090b'; ctx.lineCap = 'round';
+  const strokeCurve = (x1, y1, cx, cy, x2, y2, maxT) => {
+    for (let i = 0; i < 40; i++) {
+      const t = i / 40, inv = 1 - t;
+      const px = inv * inv * x1 + 2 * inv * t * cx + t * t * x2;
+      const py = inv * inv * y1 + 2 * inv * t * cy + t * t * y2;
+      ctx.beginPath(); ctx.arc(px, py, Math.sin(t * Math.PI) * (maxT * 0.5) + 1.5, 0, Math.PI * 2); ctx.fill();
+    }
+  };
+  if (project.brushType === 'enso_dragon') {
+    for (let i = 0; i < 80; i++) {
+      const t1 = i / 80, t2 = (i + 1) / 80;
+      ctx.beginPath(); ctx.arc(w * 0.5, h * 0.37, 215, -Math.PI * 0.72 + t1 * Math.PI * 1.88, -Math.PI * 0.72 + t2 * Math.PI * 1.88);
+      ctx.lineWidth = Math.sin(t1 * Math.PI) * 34 + 6; ctx.stroke();
+    }
+  } else if (project.brushType === 'wind_strokes') {
+    for (let s = 0; s < 5; s++) strokeCurve(240 + s * 65, 300 + s * 55, 500 + s * 65, 380 + s * 55, 730 + s * 65, 260 + s * 80, 28 - s * 3);
+  } else if (project.brushType === 'moon_crest') {
+    for (let i = 0; i < 60; i++) {
+      const t = i / 60;
+      ctx.beginPath(); ctx.arc(w * 0.5, h * 0.36, 195, Math.PI * 0.2 + t * Math.PI * 1.25, Math.PI * 0.2 + (t + 0.02) * Math.PI * 1.25);
+      ctx.lineWidth = Math.sin(t * Math.PI) * 44 + 4; ctx.stroke();
+    }
+  } else {
+    strokeCurve(320, 620, 440, 320, 520, 260, 36);
+    strokeCurve(520, 260, 610, 380, 720, 610, 30);
+  }
+
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = '800 175px "Shippori Mincho", serif';
+  project.kanji.split('').forEach((char, idx) => {
+    ctx.fillText(char, w * 0.5 + (idx % 2 === 0 ? -8 : 10), h * 0.43 + idx * 205);
+  });
+  ctx.font = '700 44px "Shippori Mincho", serif';
+  project.subKanji.split('').forEach((sc, idx) => {
+    ctx.fillText(sc, w * 0.67, h * 0.64 + idx * 54);
+  });
+  ctx.textAlign = 'left';
+  ctx.font = '700 24px "Space Mono", monospace';
+  ctx.fillText(`NO.${project.id} // ${project.year}`, 165, h - 220);
+  ctx.font = '700 32px "Shippori Mincho", serif';
+  ctx.fillText(project.title.toUpperCase(), 165, h - 180);
+  ctx.restore();
+}
+
+function drawHankoSeal(ctx, x, y, idText) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(-0.04);
+  ctx.strokeStyle = '#c83e37'; ctx.fillStyle = '#c83e37'; ctx.lineWidth = 4;
+  ctx.strokeRect(0, 0, 58, 58);
+  ctx.font = '800 26px "Shippori Mincho", serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('墨絵', 29, 22);
+  ctx.font = '700 14px "Space Mono", monospace';
+  ctx.fillText(idText, 29, 44);
+  ctx.restore();
+}
+
+function createBendableWashiMaterial(colorTex, dataTex, isFront) {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      uColorMap: { value: colorTex },
+      uDataMap: { value: dataTex },
+      uLightPos: { value: new THREE.Vector3(1.5, 2.0, 4.5) },
+      uHover: { value: 0.0 },
+      uBend: { value: 0.0 },
+      uIsFront: { value: isFront ? 1.0 : 0.0 }
+    },
+    vertexShader: `
+      uniform float uBend;
+      varying vec2 vUv;
+      varying vec3 vNormalWorld;
+      varying vec3 vWorldPos;
+      void main() {
+        vUv = uv;
+        vec3 pos = position;
+        float archCurve = (pos.x * pos.x) * 0.12;
+        float velocityFlex = sin(pos.x * 1.5) * uBend * 0.34;
+        pos.z -= archCurve - velocityFlex;
+        pos.y += pos.x * uBend * 0.07;
+
+        float dZdx = -2.0 * pos.x * 0.12 + cos(pos.x * 1.5) * 1.5 * uBend * 0.34;
+        vec3 bentNormal = normalize(vec3(normal.x - dZdx * normal.z, normal.y, normal.z));
+        vec4 worldPosition = modelMatrix * vec4(pos, 1.0);
+        vWorldPos = worldPosition.xyz;
+        vNormalWorld = normalize(mat3(modelMatrix) * bentNormal);
+        gl_Position = projectionMatrix * viewMatrix * worldPosition;
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D uColorMap;
+      uniform sampler2D uDataMap;
+      uniform vec3 uLightPos;
+      uniform float uHover;
+      uniform float uIsFront;
+      varying vec2 vUv;
+      varying vec3 vNormalWorld;
+      varying vec3 vWorldPos;
+      void main() {
+        vec3 lightDir = normalize(uLightPos - vWorldPos);
+        float diff = max(dot(vNormalWorld, lightDir), 0.0);
+        float depthAtten = smoothstep(-5.8, 1.4, vWorldPos.z);
+
+        if (uIsFront < 0.5) {
+          vec3 edgeBase = vec3(0.89, 0.86, 0.80) * (0.58 + diff * 0.42);
+          gl_FragColor = vec4(edgeBase * mix(0.4, 1.0, depthAtten), 1.0);
+          return;
+        }
+
+        vec4 albedo = texture2D(uColorMap, vUv);
+        float wetMask = texture2D(uDataMap, vUv).a;
+        vec3 viewDir = normalize(cameraPosition - vWorldPos);
+        vec3 halfVec = normalize(lightDir + viewDir);
+        float spec = pow(max(dot(vNormalWorld, halfVec), 0.0), 90.0) * wetMask;
+        vec3 lit = albedo.rgb * (0.66 + diff * 0.42) + vec3(0.98, 0.96, 0.92) * spec * (0.85 + uHover * 0.3);
+        gl_FragColor = vec4(lit * mix(0.38, 1.0, depthAtten), 1.0);
+      }
+    `
+  });
+}
+
+function initSamuraiCarousel() {
+  if (!window.THREE) return;
+  const container = $('#samurai-carousel-canvas');
+  cScene = new THREE.Scene();
+  cCamera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100);
+  cCamera.position.set(0, 0, 6.2);
+
+  cRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+  cRenderer.setSize(window.innerWidth, window.innerHeight);
+  cRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
+  cRenderer.setClearColor(0x000000, 0);
+  container.appendChild(cRenderer.domElement);
+
+  // Pixel-accurate Samurai Silhouette Depth Cutout at the center of the 3D Ring (z = RING_CENTER_Z):
+  // Writes ONLY to the depth buffer where the Samurai helmet exists so cards in the back half of the
+  // ring (z < RING_CENTER_Z) pass BEHIND the Samurai's head, while front cards pass IN FRONT of it!
+  const samImg = new Image();
+  samImg.onload = () => {
+    const samTex = new THREE.Texture(samImg);
+    samTex.needsUpdate = true;
+    const depthMat = new THREE.ShaderMaterial({
+      uniforms: { uSamurai: { value: samTex } },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D uSamurai;
+        varying vec2 vUv;
+        void main() {
+          vec3 c = texture2D(uSamurai, vUv).rgb;
+          if (distance(c, vec3(0.07, 0.06, 0.09)) < 0.085) discard;
+          gl_FragColor = vec4(0.0);
+        }
+      `,
+      colorWrite: false,
+      depthWrite: true,
+      side: THREE.DoubleSide
+    });
+    const visH = 2 * (6.2 - RING_CENTER_Z) * Math.tan(20 * Math.PI / 180);
+    samuraiDepthMesh = new THREE.Mesh(new THREE.PlaneGeometry(visH, visH), depthMat);
+    samuraiDepthMesh.position.set(0, 0, RING_CENTER_Z);
+    samuraiDepthMesh.renderOrder = 0;
+    cScene.add(samuraiDepthMesh);
+  };
+  samImg.src = window.SAMURAI_HERO_SRC || 'photos/samurai-hero.jpg';
+
+  const cardGeo = new THREE.BoxGeometry(1.72, 2.42, 0.07, 28, 12, 2);
+
+  PROJECTS.forEach((project, idx) => {
+    const { colorTex, dataTex } = createWashiCardTextures(project);
+    const frontMat = createBendableWashiMaterial(colorTex, dataTex, true);
+    const sideMat = createBendableWashiMaterial(colorTex, dataTex, false);
+    const materials = [sideMat, sideMat, sideMat, sideMat, frontMat, sideMat];
+    const mesh = new THREE.Mesh(cardGeo, materials);
+    mesh.renderOrder = 1;
+    mesh.userData = { index: idx, project, frontMat, sideMat, hoverProgress: 0 };
+    cScene.add(mesh);
+    cardMeshes.push(mesh);
+  });
+
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => {
+      cardMeshes.forEach((m, idx) => {
+        const { colorTex, dataTex } = createWashiCardTextures(PROJECTS[idx]);
+        m.userData.frontMat.uniforms.uColorMap.value = colorTex;
+        m.userData.frontMat.uniforms.uDataMap.value = dataTex;
+      });
+    });
+  }
+}
+initSamuraiCarousel();
+
+/* ---------- split text & reveal ---------- */
+$$('.split').forEach(h => {
+  let i = 0;
+  const wrap = n => { if (n.nodeType === 3) { const f = document.createDocumentFragment(); n.textContent.split(/(\s+)/).forEach(t => { if (!t.trim()) { f.append(t); return; } const s = document.createElement('span'); s.className = 'w'; s.style.setProperty('--i', i++); s.textContent = t; f.append(s); }); n.replaceWith(f); } else [...n.childNodes].forEach(wrap); };
+  [...h.childNodes].forEach(wrap);
+});
+
+const countUp = el => { if (el._done) return; el._done = 1; const to = +el.dataset.count, dec = +(el.dataset.dec || 0), t0 = performance.now();
+  const f = t => { const k = clamp((t - t0) / 1600), e = 1 - Math.pow(1 - k, 4); el.textContent = (to * e).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }); if (k < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); };
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .15, rootMargin: '0px 0px -5% 0px' });
+$$('.rise, .split').filter(el => !el.closest('.orb')).forEach(el => io.observe(el));
+
+/* ---------- photo slots, lightbox, whiteboard, decrypt ---------- */
+$$('[data-slot]').forEach(el => {
+  const frame = $('.frame', el), src = el.dataset.slot, im = new Image();
+  im.onload = () => { const i = document.createElement('img'); i.src = src; i.alt = ''; i.className = 'slot-img'; frame.appendChild(i); el.classList.add('filled'); if (!el.matches('a')) el.dataset.zoom = ''; };
+  im.src = src;
+});
+
+const lb = $('#lb');
+document.addEventListener('click', e => {
+  const z = e.target.closest('[data-zoom]');
+  if (z) { const im = $('img', z); if (im) { $('img', lb).src = im.src; lb.classList.add('on'); } }
+  else if (e.target.closest('#lb')) lb.classList.remove('on');
+});
+
+(() => { const b = $('#board'), tip = $('#board-tip');
+  b.addEventListener('click', e => { const m = e.target.closest('[data-m]');
+    if (m) { b.dataset.mode = m.dataset.m; b.classList.remove('open'); $$('[data-m]', b).forEach(x => x.classList.toggle('on', x === m)); tip.textContent = m.dataset.m === 'before' ? '← two loose buttons on every row' : '← one menu. click the three dots!'; tip.style.color = m.dataset.m === 'before' ? '#c0392b' : '#1c7a52'; }
+    else if (e.target.closest('.dots3')) b.classList.add('open'); else if (e.target.closest('.x')) b.classList.remove('open'); }); })();
+
+(() => { const box = $('#cipher'), sp = $('span', box), A = sp.textContent, B = 'Mr. Jones, of the Manor Farm, had locked the hen-houses', G = 'abcdefghijklmnopqrstuvwxyz'; let raf, cur = A;
+  const go = to => { cancelAnimationFrame(raf); const t0 = performance.now(), n = Math.max(cur.length, to.length);
+    const f = t => { const k = clamp((t - t0) / 900); let s = ''; for (let i = 0; i < n; i++) { const c = to[i] || ''; s += i < k * n ? c : (/[a-z]/i.test(c) ? G[(Math.random() * 26) | 0] : c); } sp.textContent = cur = s; if (k < 1) raf = requestAnimationFrame(f); }; raf = requestAnimationFrame(f); };
+  box.addEventListener('pointerenter', () => { go(B); $('small', box).textContent = 'Animal Farm — George Orwell'; });
+  box.addEventListener('pointerleave', () => { go(A); $('small', box).textContent = 'hover to decrypt'; }); })();
+
+/* ---------- cursor + pointer tilt ---------- */
+const cur = $('#cur'), ring = $('#cur-ring'), ringT = $('span', ring);
+let mx = innerWidth * .6, my = innerHeight * .4, rx = mx, ry = my, tiltEl = null;
+const untilt = el => { el._try = el._trx = 0; el.style.transform = ''; el.style.setProperty('--px', 0); el.style.setProperty('--py', 0); };
+
+addEventListener('pointermove', e => {
+  mx = e.clientX; my = e.clientY;
+  cTargetMouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+  cTargetMouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+  if (isRingDragging) {
+    const dx = e.clientX - dragStartX;
+    dragDist += Math.abs(dx);
+    const targetY = clamp(dragStartYScroll - dx * 2.2, G.iTop, G.wheelEnd);
+    S.tgt = targetY;
+    S.tau = .12;
+  }
+
+  const t = e.target.closest?.('[data-cursor]'), a = !t && e.target.closest?.('a,button');
+  if (t) {
+    ring.classList.add('label'); ring.classList.remove('small'); ringT.textContent = t.dataset.cursor;
+  } else if (hoveredCardIdx !== -1) {
+    ring.classList.add('label'); ring.classList.remove('small'); ringT.textContent = 'CLIMB';
+  } else {
+    ring.classList.remove('label'); ring.classList.toggle('small', !!a);
+  }
+
+  const tl = e.target.closest?.('.tilt');
+  if (tl) { const r = tl.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+    tl.style.transform = `perspective(900px) rotateX(${(-y * 6).toFixed(2)}deg) rotateY(${(x * 8).toFixed(2)}deg)`; tl.style.setProperty('--px', (-x * 16).toFixed(1)); tl.style.setProperty('--py', (-y * 12).toFixed(1)); }
+  if (tiltEl && tiltEl !== tl) untilt(tiltEl);
+  tiltEl = tl;
+}, { passive: true });
+
+/* ---------- inertial smooth scroll ---------- */
+const S = { cur: scrollY, tgt: scrollY, self: 0, tau: .15 };
+const maxY = () => document.documentElement.scrollHeight - innerHeight;
+const goTo = (y, tau = .34) => { S.tgt = clamp(y, 0, maxY()); S.tau = tau; };
+addEventListener('wheel', e => { if (e.ctrlKey) return; e.preventDefault(); if (lb.classList.contains('on')) return;
+  let d = e.deltaY; if (e.deltaMode === 1) d *= 36; else if (e.deltaMode === 2) d *= innerHeight;
+  S.tgt = clamp(S.tgt + d, 0, maxY()); S.tau = .15; }, { passive: false });
+addEventListener('scroll', () => { if (performance.now() - S.self > 140) S.cur = S.tgt = scrollY; }, { passive: true });
+
+/* ---------- geometry of the journey ---------- */
+const heroIntro = $('#hero-intro'), index = $('#index'), climb = $('#climb'), summit = $('#summit'), thanks = $('#thanks');
+const pnav = $$('#pnav button'), indexUI = $('#index-ui'), orbs = $$('.orb'), N = orbs.length;
+const STEP = () => innerHeight * .85, SEG = () => innerHeight * .9, REST = .12;
+const G = { introTop: 0, iTop: 0, wheelEnd: 0, climbTop: 0, sTop: 1, thTop: 1, docH: 1 };
+const geom = () => { const vh = innerHeight; climb.style.height = ((N + 1) * SEG() - vh * .1) + 'px';
+  G.introTop = docTop(heroIntro); G.iTop = docTop(index); G.wheelEnd = G.iTop + (NC - 1) * STEP(); G.climbTop = G.wheelEnd + vh * .95; G.sTop = docTop(summit); G.thTop = docTop(thanks); G.docH = maxY(); };
+const orbY = i => G.climbTop + (i + REST) * SEG();
+
+/* ---------- Drag & Click-to-Focus/Jump on the 3D Samurai Carousel ---------- */
+const carouselWrap = $('#samurai-carousel-wrap');
+carouselWrap.addEventListener('pointerdown', e => {
+  isRingDragging = true;
+  dragStartX = e.clientX;
+  dragStartYScroll = S.tgt;
+  dragDist = 0;
+});
+window.addEventListener('pointerup', () => {
+  if (!isRingDragging) return;
+  isRingDragging = false;
+  if (dragDist < 8 && hoveredCardIdx !== -1) {
+    const currentFocus = Math.round(ringFloatCurrent);
+    if (hoveredCardIdx === currentFocus) {
+      // Jump to that station's section on the climb (or summit)
+      const targetEl = $(PROJECTS[hoveredCardIdx].target);
+      if (targetEl) {
+        const oi = orbs.indexOf(targetEl);
+        goTo(oi >= 0 ? orbY(oi) : targetEl === summit ? G.sTop + innerHeight * .35 : docTop(targetEl), .42);
+      }
+    } else {
+      // Click to focus peripheral card in the 3D ring!
+      goTo(G.iTop + hoveredCardIdx * STEP(), .36);
+    }
+  } else if (S.tgt >= G.iTop && S.tgt <= G.wheelEnd) {
+    // Snap sequentially to the nearest card in the ring
+    const snappedIdx = clamp(Math.round((S.tgt - G.iTop) / STEP()), 0, NC - 1);
+    goTo(G.iTop + snappedIdx * STEP(), .28);
+  }
+});
+
+/* ---------- stops + keyboard ---------- */
+const stops = [
+  { y: () => 0, name: 'Samurai' },
+  { y: () => G.introTop + innerHeight * .25, name: 'Title' }
+];
+PROJECTS.forEach((p, i) => stops.push({ y: () => G.iTop + i * STEP(), name: p.title }));
+orbs.forEach((o, i) => stops.push({ y: () => orbY(i), name: o.dataset.name }));
+stops.push({ y: () => G.sTop + innerHeight * .35, name: 'Summit · Life in Japan' }, { y: () => G.thTop, name: 'ありがとう' });
+
+const stopAt = y => { let i = 0; stops.forEach((s, k) => { if (s.y() <= y + 4) i = k; }); return i; };
+const goStop = d => { const i = stopAt(S.tgt); if (d < 0 && S.tgt - stops[i].y() > 60) d = 0; goTo(stops[clamp(i + d, 0, stops.length - 1)].y(), .42); };
+addEventListener('keydown', e => { if (lb.classList.contains('on')) { if (e.key === 'Escape') lb.classList.remove('on'); return; }
+  if (['ArrowDown', 'ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); goStop(1); }
+  else if (['ArrowUp', 'ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); goStop(-1); }
+  else if (e.key === 'Home') { e.preventDefault(); goTo(0); } else if (e.key === 'End') { e.preventDefault(); goTo(maxY()); } });
+document.addEventListener('click', e => { const a = e.target.closest('a[href^="#"]'); if (!a) return; const t = $(a.getAttribute('href')); if (!t) return; e.preventDefault();
+  const oi = orbs.indexOf(t); goTo(oi >= 0 ? orbY(oi) : t === summit ? G.sTop + innerHeight * .35 : docTop(t)); });
+pnav.forEach(b => b.addEventListener('click', () => goTo(G.iTop + (+b.dataset.i) * STEP())));
+
+/* ---------- photographic plates (2.5D layers from af85a1e) ---------- */
+const L = id => { const el = $(id); el._op = -1; return el; };
+const ly = { bSky: L('#ly-base-sky'), bFg: L('#ly-base-fg'), cSky: L('#ly-clouds-sky'), cMid: L('#ly-clouds-mid'), cNear: L('#ly-clouds-near'), tSky: L('#ly-torii-sky'), tFg: L('#ly-torii-fg'), sun: L('#ly-sun') };
+const AR = { base: 3840 / 3177, clouds: 1.5, torii: 1.5, sun: 3840 / 2497 };
+const grade = $('#grade'), mist = $('#mist');
+let vw = innerWidth, vh = innerHeight, pmx = 0, pmy = 0;
+const show = (el, o) => { o = o < .004 ? 0 : o > .996 ? 1 : +o.toFixed(3); if (o === el._op) return o; el._op = o; el.style.opacity = o; el.style.visibility = o ? 'visible' : 'hidden'; return o; };
+const showAll = (o, ...els) => { let r = 0; els.forEach(el => r = show(el, o)); return r > 0; };
+const place = (el, ar, fx, fy, zoom, depth, over = 1.04, free = 0, dy = 0) => {
+  const bw = Math.max(vw, vh * ar) * over, bh = bw / ar, w = bw * zoom, h = bh * zoom;
+  let x = vw / 2 - fx * w + pmx * depth, y = vh / 2 - fy * h + pmy * depth * .6 + dy;
+  if (!free) { x = clamp(x, vw - w, 0); y = clamp(y, vh - h, 0); }
+  if (el._bw !== bw) { el._bw = bw; el.style.width = bw + 'px'; }
+  el.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) scale(${zoom.toFixed(4)})`;
+  return { x, y, w, h };
+};
+const crown = (ar, zoom, row, at) => row + (.5 - at) * vh / (Math.max(vw, vh * ar) * 1.04 / ar * zoom);
+
+/* ---------- Drift Wall ---------- */
+const DW = { root: $('#dw'), cols: [], ptr: { x: 0, y: 0 }, damp: { x: 0, y: 0 }, hov: -1, active: null, ready: 0, unit: 1, M: 1 };
+const WALL = (window.WALL_PHOTOS || []).map(n => 'photos/wall/' + n);
+(() => { let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = WALL.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [WALL[i], WALL[j]] = [WALL[j], WALL[i]]; } })();
+const buildWall = () => { if (!WALL.length || innerHeight < 50) return;
+  const list = WALL, columns = Math.min(8, list.length), tw = clamp(innerWidth * .15, 150, 270), th = tw * 1.2, gap = 18, unit = th + gap, plane = $('.drift-wall__plane', DW.root);
+  plane.textContent = ''; DW.cols = []; DW.active = null; DW.hov = -1; DW.size = innerWidth + 'x' + innerHeight;
+  const M = Math.ceil(innerHeight * 1.7 / unit) + 2;
+  DW.root.style.setProperty('--dw-tile-w', tw + 'px'); DW.root.style.setProperty('--dw-tile-h', th + 'px');
+  const colItems = Array.from({ length: columns }, () => []); list.forEach((src, i) => colItems[i % columns].push(src));
+  colItems.forEach((items, c) => {
+    const colEl = document.createElement('div'), track = document.createElement('div'); colEl.className = 'drift-wall__col'; track.className = 'drift-wall__track';
+    const fill = (t, k) => { const src = items[((k % items.length) + items.length) % items.length]; if (t._src !== src) { t._src = src; t.firstChild.firstChild.src = src; } };
+    const pseudo = ((c * .6180339887 + .35) % 1) * 2 - 1;
+    const col = { track, fill, tiles: [], head: 0, off: unit * ((c * .37) % 1), vel: 0, base: 46 * (1 + .45 * pseudo) * (c % 2 === 0 ? 1 : -1) };
+    for (let k = 0; k < M; k++) { const t = document.createElement('div'); t.className = 'drift-wall__tile'; t.dataset.col = c; t.dataset.cursor = 'View'; t.dataset.zoom = '';
+      t.innerHTML = '<span class="drift-wall__inner"><img alt="" draggable="false"><span class="drift-wall__overlay"></span></span>'; track.appendChild(t); col.tiles.push(t); fill(t, k); }
+    colEl.appendChild(track); plane.appendChild(colEl); DW.cols.push(col); });
+  DW.plane = plane; DW.unit = unit; DW.M = M; DW.ready = 1; };
+buildWall();
+(() => {
+  DW.root.addEventListener('pointermove', e => { const r = DW.root.getBoundingClientRect(); DW.ptr = { x: (e.clientX - r.left) / r.width - .5, y: (e.clientY - r.top) / r.height - .5 };
+    const hit = document.elementFromPoint(e.clientX, e.clientY), tile = hit && hit.closest('.drift-wall__tile'); if (!tile || tile === DW.active) return;
+    DW.active && DW.active.classList.remove('is-active'); tile.classList.add('is-active'); DW.active = tile; DW.hov = +tile.dataset.col; });
+  DW.root.addEventListener('pointerleave', () => { DW.ptr = { x: 0, y: 0 }; DW.active && DW.active.classList.remove('is-active'); DW.active = null; DW.hov = -1; });
+})();
+const stepWall = dt => { if (!DW.ready) return;
+  const d = 1 - Math.exp(-dt / .12), u = DW.unit, M = DW.M; DW.damp.x += (DW.ptr.x * 4.8 - DW.damp.x) * d; DW.damp.y += (-DW.ptr.y * 4.8 - DW.damp.y) * d;
+  DW.plane.style.transform = `translate(-50%,-50%) scale(1.18) rotateX(${16 + DW.damp.y}deg) rotateY(${-14 + DW.damp.x}deg) translateZ(-120px)`;
+  DW.cols.forEach((c, i) => { const tg = DW.hov === i ? 0 : c.base; c.vel += (tg - c.vel) * (1 - Math.exp(-dt / (tg === 0 ? .16 : .28)));
+    c.off += c.vel * dt;
+    while (c.off >= u) { c.off -= u; c.head++; const t = c.tiles.shift(); c.tiles.push(t); c.track.appendChild(t); c.fill(t, c.head + M - 1); }
+    while (c.off < 0) { c.off += u; c.head--; const t = c.tiles.pop(); c.tiles.unshift(t); c.track.insertBefore(t, c.track.firstChild); c.fill(t, c.head); }
+    c.track.style.transform = `translate3d(0,${(-c.off).toFixed(1)}px,0)`; }); };
+
+/* ---------- dust motes & resize ---------- */
+const mc = $('#motes'), m2 = mc.getContext('2d'), motes = Array.from({ length: 36 }, () => ({ x: Math.random(), y: Math.random(), z: .25 + Math.random() * .75, p: Math.random() * 6.28 }));
+const measure = () => orbs.forEach(o => { o._w = o.offsetWidth; o._h = o.offsetHeight; });
+let wallT = 0;
+const sizeAll = () => {
+  vw = innerWidth; vh = innerHeight; mc.width = vw; mc.height = vh; measure(); geom();
+  if (cCamera && cRenderer) {
+    cCamera.aspect = vw / vh;
+    cCamera.updateProjectionMatrix();
+    cRenderer.setSize(vw, vh);
+  }
+  if (DW.size !== vw + 'x' + vh) { clearTimeout(wallT); wallT = setTimeout(buildWall, 250); }
+};
+addEventListener('resize', sizeAll); addEventListener('load', sizeAll); sizeAll();
+document.fonts && document.fonts.ready.then(sizeAll);
+
+/* ============================================================================
+   3. MAIN SCROLL LOOP:
+      Stage 1: Samurai <DitherVeil /> full screen
+      Stage 2: Centered Intro Text with Semi-Opaque Samurai in background
+      Stage 3: Washi Cards swept in by the wind -> 3D Circular Carousel around Samurai Head
+      Stage 4: Cards fly away on the wind -> Photographic Mount Fuji Climb & Drift Wall
+   ============================================================================ */
+const ease = f => f < .36 ? .04 * f / .36 : .04 + .96 * smooth(.36, 1, f);
+const introOverlay = $('#samurai-intro-overlay'), heroJp = $('#hero-jp'), heroHint = $('#hero-hint');
+const clock = window.THREE ? new THREE.Clock() : null;
+let vel = 0, frame = 0, lastT = performance.now(), mistC = '';
+
+const loop = now => {
+  requestAnimationFrame(loop); frame++;
+  const dt = Math.min(.05, (now - lastT) / 1000) || .016; lastT = now;
+  if (frame % 45 === 1) { measure(); geom(); }
+
+  const before = S.cur;
+  if (Math.abs(S.tgt - S.cur) > .4) { S.cur = lerp(S.cur, S.tgt, 1 - Math.exp(-dt / S.tau)); S.self = now; scrollTo(0, S.cur); }
+  const y = S.cur;
+  vel = lerp(vel, clamp((S.cur - before) / dt / 2600, -1, 1), .14); const av = Math.abs(vel);
+
+  rx = lerp(rx, mx, .16); ry = lerp(ry, my, .16);
+  cur.style.transform = `translate(${mx}px,${my}px)`; ring.style.transform = `translate(${rx}px,${ry}px) scale(${1 + av * .5})`;
+  pmx = lerp(pmx, (.5 - mx / vw) * 2, .05); pmy = lerp(pmy, (.5 - my / vh) * 2, .05);
+
+  const step = STEP();
+  const f = clamp((y - G.iTop) / step, 0, NC - 1);
+  const e = clamp((y - G.wheelEnd) / (vh * .95));
+  const q = (y - G.climbTop) / SEG(), qi = Math.floor(q), t = qi + ease(q - qi);
+
+  // ----- STAGE 1 & 2 & 3: SAMURAI <DitherVeil /> + CENTERED INTRO TEXT -----
+  // Stage 1 (y = 0): Samurai is 100% opaque.
+  // Stage 2 (G.introTop): Samurai dims to ~0.40 opacity while Centered Intro Text is 1.0.
+  // Stage 3 (G.iTop .. G.wheelEnd): Centered text fades out, Samurai returns to ~0.92 opacity in the center of the 3D card ring!
+  // Stage 4 (e -> 1): Samurai fades out as cards fly away and Mount Fuji plates appear!
+  const introIn = smooth(vh * 0.25, vh * 0.85, y);
+  const introOut = smooth(G.iTop - vh * 0.85, G.iTop - vh * 0.2, y);
+  const introOp = introIn * (1 - introOut);
+  show(introOverlay, introOp);
+  introOverlay.style.transform = `translate3d(0, ${((1 - introIn) * 32 - introOut * 36).toFixed(1)}px, 0)`;
+
+  const samuraiExit = smooth(0.35, 0.88, e);
+  const samuraiDimForText = introOp * 0.58; // Dims Samurai to ~0.42 when text is centered
+  const samuraiOp = (1.0 - samuraiDimForText) * (1.0 - samuraiExit);
+  if (show(ditherVeilEl, samuraiOp)) {
+    ditherVeilInstance.wake();
+  }
+  show(heroJp, 1 - smooth(G.wheelEnd, G.climbTop, y));
+  show(heroHint, 1 - smooth(vh * 0.15, vh * 0.6, y));
+
+  // ----- STAGE 3: 3D CIRCULAR CAROUSEL OF BENDABLE WASHI CARDS AROUND THE SAMURAI HEAD -----
+  // Wind Entry: cards sweep in on the wind as you scroll from #hero-intro into #index
+  // Wind Exit: cards fly away on the wind as you scroll past G.wheelEnd into #climb
+  const windIn = smooth(G.iTop - vh * 0.85, G.iTop - vh * 0.02, y);
+  const windOut = smooth(0.02, 0.92, e);
+  const carouselVis = windIn * (1 - smooth(0.85, 0.99, windOut));
+
+  if (show(carouselWrap, carouselVis) && cRenderer && cScene && cCamera) {
+    carouselWrap.classList.toggle('interactive', windIn > 0.7 && windOut < 0.2);
+    const elapsedTime = clock ? clock.getElapsedTime() : now * 0.001;
+    cMouse.lerp(cTargetMouse, 0.1);
+
+    const prevRing = ringFloatCurrent;
+    ringFloatCurrent = lerp(ringFloatCurrent, f, 0.12);
+    ringVelocity = lerp(ringVelocity, (ringFloatCurrent - prevRing) * 14.0, 0.2);
+    const ringAngle = ringFloatCurrent * ANGLE_STEP;
+
+    if (!isRingDragging && windIn > 0.8 && windOut < 0.15) {
+      cRaycaster.setFromCamera(cMouse, cCamera);
+      const hits = cRaycaster.intersectObjects(cardMeshes);
+      hoveredCardIdx = hits.length > 0 ? hits[0].object.userData.index : -1;
+    } else {
+      hoveredCardIdx = -1;
+    }
+
+    const dynLight = new THREE.Vector3(
+      Math.sin(elapsedTime * 0.6) * 1.5 + cMouse.x * 3.0,
+      Math.cos(elapsedTime * 0.5) * 1.1 + 1.0 + cMouse.y * 2.4,
+      5.0
+    );
+
+    const inGust = 1.0 - windIn;
+    cardMeshes.forEach((card, idx) => {
+      const theta = idx * ANGLE_STEP - ringAngle;
+
+      // Base 3D Circular Ring position surrounding the Samurai head at (0, 0, RING_CENTER_Z)
+      let x = Math.sin(theta) * RING_RADIUS;
+      let z = Math.cos(theta) * RING_RADIUS + RING_CENTER_Z;
+      let yPos = Math.sin(elapsedTime * 1.15 + idx * 1.2) * 0.05;
+
+      // Wind Entry trajectory (cards swept in by the wind to surround the Samurai)
+      const cardWindIn = Math.pow(clamp(inGust * 1.25, 0, 1), 1.7);
+      const windInAngle = idx * 0.9 + inGust * 2.4;
+      x += cardWindIn * (Math.cos(windInAngle) * 5.2 + 3.4);
+      yPos += cardWindIn * (Math.sin(windInAngle) * 2.6 + 2.2);
+      z += cardWindIn * 2.8;
+
+      // Wind Exit trajectory (cards fly away carried by the wind as you leave #index)
+      const cardWindOut = Math.pow(clamp(windOut * 1.25 - idx * 0.04, 0, 1), 1.65);
+      x += cardWindOut * (-5.6 + Math.sin(idx * 1.8) * 3.2);
+      yPos += cardWindOut * (4.8 + idx * 0.55);
+      z += cardWindOut * 3.4;
+
+      card.position.set(x, yPos, z);
+
+      const isHov = hoveredCardIdx === idx;
+      card.userData.hoverProgress += ((isHov ? 1 : 0) - card.userData.hoverProgress) * 0.12;
+
+      const frontWeight = Math.max(0, Math.cos(theta));
+      const tiltYaw = cMouse.x * 0.22 * frontWeight;
+      const tiltPitch = -cMouse.y * 0.16 * frontWeight;
+
+      // Tangential ring orientation + wind flutter on entry/exit
+      card.rotation.y = theta + tiltYaw + cardWindIn * 2.2 - cardWindOut * 2.6;
+      card.rotation.x = tiltPitch + cardWindIn * 0.85 - cardWindOut * 1.15;
+      card.rotation.z = -ringVelocity * 0.035 * frontWeight + cardWindIn * 1.1 - cardWindOut * 1.4;
+
+      const sc = 1.0 + card.userData.hoverProgress * 0.05;
+      card.scale.set(sc, sc, sc);
+
+      const totalBend = clamp(ringVelocity + (cardWindIn - cardWindOut) * 1.6 * Math.sin(elapsedTime * 4.5 + idx), -1.8, 1.8);
+      card.userData.frontMat.uniforms.uLightPos.value.copy(dynLight);
+      card.userData.frontMat.uniforms.uHover.value = card.userData.hoverProgress;
+      card.userData.frontMat.uniforms.uBend.value = totalBend;
+      card.userData.sideMat.uniforms.uLightPos.value.copy(dynLight);
+      card.userData.sideMat.uniforms.uBend.value = totalBend;
+    });
+
+    cRenderer.render(cScene, cCamera);
+  }
+
+  const ai = Math.round(f);
+  pnav.forEach((b, i) => b.classList.toggle('on', i === ai));
+  const uo = windIn * clamp(1 - e * 2.6);
+  show(indexUI, uo);
+
+  // ----- STAGE 4: PHOTOGRAPHIC PLATES & ORBITING PANELS ("Y SIGUE COMO ESTABAMOS") -----
+  // Plate 1: Fuji from the lake
+  const bOp = smooth(0.35, 0.85, e) * (1 - smooth(6.46, 6.6, t));
+  let axis = { x: vw / 2, y: vh * .36 };
+  if (showAll(bOp, ly.bFg, ly.bSky)) {
+    const u = clamp((t + 1) / 7.5), us = u * u * (3 - 2 * u), z = lerp(1, 1.5, us) * (1 + bell(t, 6.5, .5) * .12);
+    const fy = crown(AR.base, z, .125, lerp(.11, .075, us)), r = place(ly.bFg, AR.base, lerp(.5, .47, us), fy, z, 14);
+    place(ly.bSky, AR.base, lerp(.5, .47, us), fy, z, 9);
+    axis = { x: r.x + .455 * r.w, y: r.y + .2 * r.h };
+  }
+  // Plate 2: Above the sea of clouds
+  const cOp = smooth(6.42, 6.56, t) * (1 - smooth(12.44, 12.58, t));
+  if (showAll(cOp, ly.cMid, ly.cSky, ly.cNear)) {
+    const u = clamp((t - 6.5) / 6), z = lerp(1, 1.36, u), fx = lerp(.5, .47, u), fy = crown(AR.clouds, z, .154, lerp(.13, .085, u));
+    const r = place(ly.cMid, AR.clouds, fx, fy, z, 12);
+    place(ly.cSky, AR.clouds, fx, fy, 1.1 * Math.pow(z, .7), 6, 1.04);
+    place(ly.cNear, AR.clouds, fx, fy, Math.pow(z, 1.9), 30, 1.09, 1, u * vh * .2);
+    axis = { x: r.x + .463 * r.w, y: r.y + .24 * r.h };
+  }
+  show(grade, smooth(11.2, 12.45, t) * (1 - smooth(12.45, 12.6, t)) * .8);
+  // Plate 3: Torii at the summit, before dawn
+  const gOp = smooth(12.42, 12.58, t) * (1 - smooth(14.5, 15.05, t));
+  if (showAll(gOp, ly.tSky, ly.tFg)) {
+    const u = clamp((t - 12.5) / 2.5), z = lerp(1, 1.1, u);
+    place(ly.tSky, AR.torii, lerp(.5, .53, u), .56, 1.06 * Math.pow(z, .8), 8);
+    place(ly.tFg, AR.torii, lerp(.5, .53, u), .56, 1.02 * Math.pow(z, 1.6), 26, 1.04, 1, vh * .03);
+    axis = { x: vw * .5, y: vh * .34 };
+  }
+  // Plate 4: Sunrise
+  const sOp = smooth(14.4, 15, t);
+  if (show(ly.sun, sOp)) { const u = clamp((y - G.sTop + vh) / Math.max(1, G.docH - G.sTop + vh)); place(ly.sun, AR.sun, .48, lerp(.5, .6, u), lerp(1.02, 1.2, u), 10); }
+
+  const m1 = bell((y - G.wheelEnd) / (vh * .95), .78, .17), m2b = bell(t, 6.5, .17), m3 = bell(t, 12.5, .16), mo = Math.max(m1, m2b, m3);
+  const mc2 = m3 > .02 && m3 >= m2b ? '#0a0e1d' : m2b > m1 ? '#f1f3f7' : '#f4ebe1';
+  if (mc2 !== mistC) { mistC = mc2; mist.style.background = mc2; }
+  show(mist, mo * .96);
+
+  // ----- The Spiral: panels orbit the mountain; the one in front is the one you read -----
+  const Rx = Math.max(vw * .66, 620), oFade = 1 - smooth(G.sTop - vh * .7, G.sTop - vh * .15, y), orbOn = y > G.wheelEnd + vh * .35 && oFade > 0;
+  for (let i = 0; i < N; i++) {
+    const o = orbs[i], a = i - t, ab = Math.abs(a);
+    if (!orbOn || ab > 2.7) { if (o._on) { o._on = 0; o.style.visibility = 'hidden'; o.classList.remove('cur'); } continue; }
+    const th = a * 72 * DEG, c = Math.cos(th), k = (c + 1) / 2, fit = Math.min(1, vh * .75 / o._h, vw * .92 / o._w);
+    const sc = lerp(.3, 1, Math.pow(k, 1.25)) * fit;
+    const X = lerp(axis.x, vw / 2, k) + Math.sin(th) * Rx, Y = lerp(axis.y, vh * .56, k) - a * vh * .03 + vel * 26 * (1 - k * .5);
+    const front = ab < .5, far = ab > .62;
+    o.style.transform = `translate3d(${(X - o._w / 2).toFixed(1)}px,${(Y - o._h / 2).toFixed(1)}px,0) perspective(1500px) rotateY(${(-clamp(a, -1.15, 1.15) * 36 - vel * 5).toFixed(2)}deg) scale(${sc.toFixed(4)})`;
+    o.style.opacity = (lerp(.34, 1, Math.pow(k, 1.6)) * clamp((2.7 - ab) / .5) * oFade).toFixed(3);
+    o.style.zIndex = c < -.08 ? 10 : front ? 31 : 30;
+    if (!o._on) { o._on = 1; o.style.visibility = 'visible'; }
+    if (front !== o._front) { o._front = front; o.classList.toggle('cur', front); }
+    if (ab < .85 && !o._in) { o._in = 1; o.classList.add('in'); $$('[data-count]', o).forEach(countUp); }
+    if (far !== o._far) { o._far = far; o.classList.toggle('far', far); }
+  }
+
+  if (y > G.sTop - vh && y < G.sTop + summit.offsetHeight) stepWall(dt);
+
+  m2.clearRect(0, 0, mc.width, mc.height);
+  for (const m of motes) {
+    m.y -= (vel * .02 + .0004) * m.z; m.x += Math.sin(now * .0004 + m.p) * .0002 * m.z; m.y = (m.y + 1) % 1; m.x = (m.x + 1) % 1;
+    m2.fillStyle = `rgba(255,236,210,${(.06 + .18 * m.z).toFixed(3)})`; m2.beginPath(); m2.ellipse(m.x * mc.width, m.y * mc.height, .8 + 1.6 * m.z, (.8 + 1.6 * m.z) * (1 + av * 5), 0, 0, 6.283); m2.fill();
+  }
+};
+requestAnimationFrame(loop);
+window.__deck = { goTo, stops, G, orbY };
+})();
+</script>
+</body>
+</html>

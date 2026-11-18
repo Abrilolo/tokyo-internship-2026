@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Quest Part II - Flappy Bird Evolution</title>
+  <style>
+    :root {
+      --ink: #162033;
+      --muted: #667085;
+      --paper: #fbfaf7;
+      --line: #d9dee8;
+      --blue: #2f80ed;
+      --green: #27ae60;
+      --red: #eb5757;
+      --orange: #e58b2a;
+      --panel: #ffffff;
+      --shadow: 0 18px 45px rgba(26, 34, 52, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+      background: var(--paper);
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font: 18px/1.45 "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 12% 14%, rgba(47, 128, 237, 0.10), transparent 28%),
+        radial-gradient(circle at 86% 12%, rgba(229, 139, 42, 0.12), transparent 24%),
+        linear-gradient(180deg, #fbfaf7 0%, #eef4f7 100%);
+    }
+
+    .slide {
+      min-height: 100vh;
+      scroll-snap-align: start;
+      padding: 56px 72px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 24px;
+      position: relative;
+    }
+
+    .slide::after {
+      content: attr(data-slide);
+      position: absolute;
+      right: 34px;
+      bottom: 22px;
+      color: #98a2b3;
+      font-size: 14px;
+    }
+
+    h1, h2 {
+      margin: 0;
+      letter-spacing: 0;
+      line-height: 1.05;
+    }
+
+    h1 {
+      max-width: 980px;
+      font-size: clamp(52px, 7vw, 92px);
+    }
+
+    h2 {
+      font-size: clamp(36px, 4.8vw, 64px);
+    }
+
+    h3 {
+      margin: 0 0 10px;
+      font-size: 24px;
+      line-height: 1.15;
+    }
+
+    p {
+      margin: 0;
+      max-width: 940px;
+    }
+
+    .lead {
+      max-width: 850px;
+      color: #344054;
+      font-size: 27px;
+      line-height: 1.35;
+    }
+
+    .kicker {
+      color: var(--orange);
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      margin-bottom: 14px;
+      text-transform: uppercase;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .content {
+      align-self: center;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 34px;
+      align-items: center;
+    }
+
+    .wide-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid rgba(217, 222, 232, 0.9);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+
+    .flat {
+      border-top: 2px solid var(--line);
+      padding-top: 18px;
+    }
+
+    .stat {
+      font-size: 54px;
+      line-height: 1;
+      font-weight: 850;
+      margin: 4px 0 8px;
+    }
+
+    .stat.blue { color: var(--blue); }
+    .stat.green { color: var(--green); }
+    .stat.orange { color: var(--orange); }
+    .stat.red { color: var(--red); }
+
+    .label {
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .plot {
+      display: block;
+      width: 100%;
+      max-height: 66vh;
+      object-fit: contain;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .plot.small {
+      max-height: 34vh;
+      box-shadow: none;
+    }
+
+    .caption {
+      color: var(--muted);
+      font-size: 15px;
+      margin-top: 10px;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 24px;
+    }
+
+    li {
+      margin: 10px 0;
+      max-width: 880px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 13px 15px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: #344054;
+      background: #eef3f7;
+      font-size: 14px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code {
+      background: #eef3f7;
+      border: 1px solid #d8e0ea;
+      border-radius: 5px;
+      padding: 1px 5px;
+      font-family: Consolas, monospace;
+      font-size: .94em;
+    }
+
+    .legend {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .blue-bg { background: var(--blue); }
+    .green-bg { background: var(--green); }
+    .red-bg { background: var(--red); }
+    .orange-bg { background: var(--orange); }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .gallery figure {
+      margin: 0;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .gallery img {
+      width: 100%;
+      display: block;
+    }
+
+    .gallery figcaption {
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .slide {
+        padding: 40px 24px;
+      }
+
+      .two-col, .wide-grid, .gallery {
+        grid-template-columns: 1fr;
+      }
+
+      .plot {
+        max-height: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="slide" data-slide="01">
+    <div>
+      <div class="kicker">AI Quest Part II</div>
+      <h1>Flappy Bird evolution experiment</h1>
+    </div>
+    <div class="content">
+      <p class="lead">
+        We evolved neural-network birds with a genetic algorithm, then compared
+        input choices and hidden-layer sizes on the same game engine.
+      </p>
+    </div>
+    <p class="meta">Evidence: saved genomes and training plots from <code>ai_quest/part_2_flappy/assets/plots</code></p>
+  </section>
+
+  <section class="slide" data-slide="02">
+    <div>
+      <div class="kicker">Setup</div>
+      <h2>What changed across bots</h2>
+    </div>
+    <div class="content wide-grid">
+      <div class="card">
+        <div class="label">1input</div>
+        <div class="stat red">1</div>
+        <p><code>dy_to_gap</code>. The bot only knows whether it sits above or below the current pipe gap.</p>
+      </div>
+      <div class="card">
+        <div class="label">2inputs</div>
+        <div class="stat green">2</div>
+        <p><code>velocity</code> plus <code>dy_to_gap</code>. This acts like a simple proportional-derivative controller.</p>
+      </div>
+      <div class="card">
+        <div class="label">4inputs</div>
+        <div class="stat blue">4</div>
+        <p>Height, velocity, pipe distance, and <code>dy_to_gap</code>. More context, but a bigger search space.</p>
+      </div>
+      <div class="card">
+        <div class="label">lookahead</div>
+        <div class="stat orange">2</div>
+        <p><code>dy_to_gap</code> plus <code>dy_to_nextgap</code>. It sees where the next gap will be.</p>
+      </div>
+      <div class="card">
+        <div class="label">neat3</div>
+        <div class="stat">3</div>
+        <p><code>height</code>, <code>dist_to_top_pipe</code>, and <code>dist_to_bottom_pipe</code>. This mirrors the common NEAT-style Flappy setup.</p>
+      </div>
+    </div>
+    <p class="footer-note">Each family trained at hidden-layer sizes 2 and 6: 10 sweep champions total.</p>
+  </section>
+
+  <section class="slide" data-slide="03">
+    <div>
+      <div class="kicker">Training sweep</div>
+      <h2>All 10 sweep bots reached the medium training cap</h2>
+    </div>
+    <div class="content two-col">
+      <div>
+        <p class="lead">
+          Every saved <code>*-h2</code> and <code>*-h6</code> champion reached
+          fitness 6560 after 40 generations on medium with a new map each generation.
+        </p>
+        <ul>
+          <li>Fitness cap: 5000 survival frames plus 78 pipes × 20 bonus.</li>
+          <li>This confirms the genetic algorithm can find working controllers for every representation.</li>
+          <li>The training cap alone does not prove robust performance on a fixed hard map.</li>
+        </ul>
+      </div>
+      <div>
+        <img class="plot" src="assets/plots/train_neat3-h6.png" alt="Training curve for neat3 h6">
+        <p class="caption">Example curve: neat3 with 6 hidden neurons finds a champion quickly, while the population average keeps moving because maps vary and mutation continues.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-slide="04">
+    <div>
+      <div class="kicker">Generalization</div>
+      <h2>Hard maps separate the controllers</h2>
+    </div>
+    <div class="content two-col">
+      <div>
+        <img class="plot" src="assets/plots/presentation_hard_heatmap.png" alt="Hard-level transfer heatmap">
+      </div>
+      <div>
+        <p class="lead">
+          The hard map exposes the difference between memorizing enough medium behavior
+          and actually transferring to tighter pipes.
+        </p>
+        <ul>
+          <li><code>neat3-h6</code> is the clear outlier in this sweep: 21 pipes on hard.</li>
+          <li><code>lookahead</code> remains competitive, but the 40-generation h2/h6 sweep favored the NEAT-style geometry model.</li>
+          <li>More hidden neurons did not create a monotonic improvement.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="footer-note">Scores from <code>tools/roster.py</code> using fixed level maps: easy seed 11, medium seed 22, hard seed 33.</p>
+  </section>
+
+  <section class="slide" data-slide="05">
+    <div>
+      <div class="kicker">Level profile</div>
+      <h2>Easy and medium hide weakness</h2>
+    </div>
+    <div class="content two-col">
+      <div>
+        <img class="plot" src="assets/plots/presentation_level_profile.png" alt="Best family champions across fixed levels">
+      </div>
+      <div>
+        <h3>What changes by level</h3>
+        <ul>
+          <li>Most champions look strong on easy because the gaps are forgiving.</li>
+          <li>Medium training proves the bots can survive in the environment they practiced.</li>
+          <li>Hard becomes the useful test because it stresses jump timing and gap transitions.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-slide="06">
+    <div>
+      <div class="kicker">Model comparison</div>
+      <h2>NEAT-style geometry wins this 40-generation sweep</h2>
+    </div>
+    <div class="content two-col">
+      <div>
+        <img class="plot" src="assets/plots/presentation_best_by_family.png" alt="Best hard performer from each input family">
+      </div>
+      <div>
+        <img class="plot" src="assets/plots/presentation_efficiency_scatter.png" alt="Hard score versus genome size">
+      </div>
+    </div>
+    <p class="footer-note">The best sweep performer uses pipe-edge geometry with 6 hidden neurons: <code>neat3-h6</code>.</p>
+  </section>
+
+  <section class="slide" data-slide="07">
+    <div>
+      <div class="kicker">Training behavior</div>
+      <h2>Fast learning is not the same as robust behavior</h2>
+    </div>
+    <div class="content two-col">
+      <div>
+        <img class="plot" src="assets/plots/presentation_convergence_heatmap.png" alt="Convergence heatmap">
+      </div>
+      <div>
+        <img class="plot" src="assets/plots/presentation_population_quality.png" alt="Population quality line chart">
+        <h3>Reading</h3>
+        <ul>
+          <li>Several models reached the medium cap almost immediately.</li>
+          <li>The 4-input family needed more generations because its genome is larger.</li>
+          <li>Population average helps reveal whether the behavior spread beyond one champion.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-slide="08">
+    <div>
+      <div class="kicker">Findings</div>
+      <h2>What the experiment says</h2>
+    </div>
+    <div class="content two-col">
+      <div class="flat">
+        <h3>1. More inputs did not automatically help</h3>
+        <p>The 4-input bots solved medium, but their extra signals created a larger genome. Evolution had more weights to tune and more ways for mutation to damage behavior.</p>
+      </div>
+      <div class="flat">
+        <h3>2. NEAT-style geometry transferred best here</h3>
+        <p><code>height</code>, <code>dist_to_top_pipe</code>, and <code>dist_to_bottom_pipe</code> gave the best hard score in this 40-generation sweep: <code>neat3-h6</code>.</p>
+      </div>
+      <div class="flat">
+        <h3>3. Hidden size behaved like capacity, not magic</h3>
+        <p>Six hidden neurons helped <code>neat3</code>, but hurt or failed to improve other families. Capacity only helps when the inputs make the search useful.</p>
+      </div>
+      <div class="flat">
+        <h3>4. A random-map training cap is not enough</h3>
+        <p>Every bot reached the medium cap, but many failed on the fixed hard map. Evaluation needs held-out maps or a hard-level sweep.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-slide="09">
+    <div>
+      <div class="kicker">Recommendation</div>
+      <h2>The next experiment</h2>
+    </div>
+    <div class="content two-col">
+      <div>
+        <p class="lead">
+          Keep <code>neat3</code> and <code>lookahead</code> as the main candidates, then evaluate both across several unseen hard maps before saving the final winner.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Recommended command path</h3>
+        <p><code>python tools/sweep.py --models neat3 lookahead --hidden-sizes 2 6 --generations 100 --level hard</code></p>
+        <p class="caption">Then race the strongest shapes in arena mode and record held-out scores from <code>tools/roster.py</code>.</p>
+      </div>
+    </div>
+    <p class="footer-note">Current best from the 40-generation medium sweep: <code>neat3-h6</code>, 21 pipes on hard.</p>
+  </section>
+</body>
+</html>
