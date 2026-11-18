@@ -1,0 +1,22 @@
+# Ignore all other project directories (Option B: self-contained presentation)
+/ai_quest/
+/android-launcher/
+/archify/
+/basic_programming/
+/firstAssignment_en/
+/graphify-out/
+/transportation/
+/.vscode/
+/.claude/
+/.venv/
+/.pytest_cache/
+/requirements.txt
+
+# Raw high-res / HEIC source photos (the web app uses presentation/photos/wall/ instead)
+/presentation/photos/fotos-japan/
+
+# OS & Python caches
+__pycache__/
+*.py[cod]
+.DS_Store
+Thumbs.db
