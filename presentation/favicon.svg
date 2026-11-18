@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1724"/>
+      <stop offset="1" stop-color="#0c0a10"/>
+    </linearGradient>
+    <linearGradient id="kabuto" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f4f1ea"/>
+      <stop offset=".55" stop-color="#d7b4f3"/>
+      <stop offset="1" stop-color="#82ba96"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <path d="M10 33c3-10 10.5-16 15-16.6-1.6 2-2.7 4.7-3.2 7.7-3.4-3-7-4.1-8.8-3.3-2 .9-2.6 6.9-3 12.2Z" fill="url(#kabuto)"/>
+  <path d="M54 33c-3-10-10.5-16-15-16.6 1.6 2 2.7 4.7 3.2 7.7 3.4-3 7-4.1 8.8-3.3 2 .9 2.6 6.9 3 12.2Z" fill="url(#kabuto)"/>
+  <path d="M32 18c5.4 0 9.8 6 9.8 15.2 0 7.7-4.4 12.8-9.8 12.8s-9.8-5.1-9.8-12.8C22.2 24 26.6 18 32 18Z" fill="url(#kabuto)"/>
+  <path d="M32 24.5 29.6 31H34.4L32 24.5Z" fill="#171619"/>
+  <path d="M24 39c2.3 2 5 3.1 8 3.1s5.7-1.1 8-3.1c1.7.9 2.6 2.9 2 4.8-1 3.1-3.4 5-6 5-.8 0-1.6-.2-2.3-.6C32.9 50 31.6 51 30.1 51s-2.8-1-3.6-2.8c-.7.4-1.5.6-2.3.6-2.6 0-5-1.9-6-5-.6-1.9.3-3.9 2-4.8Z" fill="#2a2433"/>
+</svg>

@@ -97,7 +97,7 @@
     return card;
   });
   window.StoryVisuals.mount();
-  const washi = window.createWashiStage?.($('#card-materials'), cards, wake);
+  const washi = window.createWashiStage?.($('#card-materials'), cards, wake, mobile);
 
   /* Hover teasers are live, muted video streams drawn from project motifs.
      Set project.previewSrc to a local MP4/WebM to replace a teaser with footage. */
@@ -505,7 +505,7 @@
         });
       });
       washi?.render(cardPoses, now, mouse, hovered, {
-        opacity: reduced ? 0 : stageOpacity * (1 - s.detail),
+        opacity: reduced ? 0 : stageOpacity * (1 - s.detail) * (mobile ? .4 : 1),
         spin: position * .5 + now * .00024, rise: position * .11 + now * .000028, glitch,
         x: rigX, y: -rigY * .5, radius: helixRadius
       });
@@ -578,8 +578,8 @@
     if (refs.progress._val !== progPct) { refs.progress._val = progPct; refs.progress.setAttribute('aria-valuenow', progPct); }
     let hint = 'Scroll to begin';
     if (position > 0.65) hint = 'Keep scrolling';
-    if (position > 3.1 && position < timeline.doors) hint = s.detail > .8 ? 'Scroll to turn the page' : 'Hover to preview · scroll to explore';
-    if (position >= timeline.photos) hint = 'Hover to pause · click to view';
+    if (position > 3.1 && position < timeline.doors) hint = s.detail > .8 ? 'Scroll to turn the page' : (fine ? 'Hover to preview · scroll to explore' : 'Tap a card · scroll to explore');
+    if (position >= timeline.photos) hint = fine ? 'Hover to pause · click to view' : 'Tap to view';
     if (position >= timeline.closing) hint = '';
     setText(scrollHintText, hint); show(refs['scroll-hint'], hint ? 1 : 0);
     const helixActive = stageOpacity > .01 && s.detail < .999 && !reduced;

@@ -4,6 +4,8 @@
 (() => {
 'use strict';
 const S = (label, html) => ({ label, html });
+const FINE = matchMedia('(hover: hover) and (pointer: fine)').matches;
+const CIPHER_HINT = FINE ? 'hover to decrypt' : 'tap to decrypt';
 
 /* Photo the user still has to drop in: shows a dashed slot until the file exists. */
 const slot = (src, hint, ratio) => `<figure class="sc-slot"><div class="sc-frame"${ratio ? ` style="aspect-ratio:${ratio.toFixed(4)}"` : ''}><img src="${src}" alt="${hint}"></div>
@@ -47,7 +49,7 @@ window.STORY_SCENES = {
       <div class="sc-beats">
         <article class="sc-beat"><h4>01 · Data Structures</h4><h3>Lists, trees & <b>hash tables</b></h3><p>Implemented <b>linked lists</b>, <b>stacks</b>, <b>queues</b>, <b>self-balancing trees</b>, and a <b>hash table with collision avoidance</b>. I also tested <b>8 optimization steps</b> on a slow C program and built a <b>Linux service watchdog</b>.</p></article>
         <article class="sc-beat"><h4>02 · Logic & Cipher</h4><h3><b>IrvineLang</b> & Cryptanalysis</h3><p>Built the interpreter for <b>IrvineLang</b> (a bit-tape virtual machine controlled by the letters <b>I‑r‑v‑i‑n‑e</b>) and broke a <b>substitution cipher</b> using <b>letter frequencies</b> and word patterns.</p>
-          <div class="sc-cipher" tabindex="0"><small>hover to decrypt</small><span>Ig. Sqlod, qz fro Iulqg Zugi, ruc aqmeoc fro rol-rqhdod</span></div></article>
+          <div class="sc-cipher" tabindex="0"><small>${CIPHER_HINT}</small><span>Ig. Sqlod, qz fro Iulqg Zugi, ruc aqmeoc fro rol-rqhdod</span></div></article>
         <article class="sc-beat"><h4>03 · New Tools for Me</h4><h3>What I learned & used here</h3><div class="sc-chips"><span>C++</span><span>Ruby</span><span>pytest</span></div>
           <p class="sc-gap">These were the tools <b>I didn't know before</b> and got to use in these assignments: working with pointers and memory in <b>C / C++</b>, writing recursion and structs in <b>Ruby</b>, and running <b>automated tests with pytest</b>.</p></article>
       </div>`),
@@ -252,9 +254,10 @@ function wireCipher(box, reduced) {
     raf = requestAnimationFrame(f);
   };
   const open = () => { go(PLAIN); label.textContent = 'Animal Farm — George Orwell'; };
-  const close = () => { go(scrambled); label.textContent = 'hover to decrypt'; };
+  const close = () => { go(scrambled); label.textContent = CIPHER_HINT; };
   box.addEventListener('pointerenter', open); box.addEventListener('focus', open);
   box.addEventListener('pointerleave', close); box.addEventListener('blur', close);
+  if (!FINE) box.addEventListener('click', () => (cur === scrambled ? open() : close()));
 }
 
 function wireBoard(board) {

@@ -236,7 +236,7 @@
 .scene-page .scene h2,.scene-page .scene h3{margin-top:0}
 @media (max-width:760px){
   #card-space .card-back.has-scenes .story-body{margin:28px 22px}
-  #card-space .story-page.scene-page{overflow:auto}
+  #card-space .story-page.scene-page{overflow-x:hidden;overflow-y:auto}
   .scene-head{margin:0;flex-wrap:wrap}
 }
 

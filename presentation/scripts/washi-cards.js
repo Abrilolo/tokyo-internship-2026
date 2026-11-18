@@ -676,7 +676,7 @@ function createWashiWetInkMaterial(colorTex, dataTex) {
 }
 
 // Scene adapter follows.
-window.createWashiStage = function createWashiStage(container, cards, requestRender) {
+window.createWashiStage = function createWashiStage(container, cards, requestRender, mobile = false) {
   if (!window.THREE) return null;
   let renderer;
   try { renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' }); }
@@ -705,7 +705,11 @@ window.createWashiStage = function createWashiStage(container, cards, requestRen
   if (samuraiStage) samuraiStage.before(backLayer); else document.body.prepend(backLayer);
 
   // Iridescent motes orbiting the head on the same helix as the cards.
-  const MOTES = 620, moteColors = ['#b79cff', '#5f9573', '#82ba96', '#6fe0d0', '#f1c56b', '#f4f1ea', '#b86ee0'];
+  /* On a narrow phone viewport the same orbit radius fills a much larger share of
+     the screen width, so the ambient dust reads as clutter over the header and
+     card text rather than a soft halo; thinning it out keeps the effect without
+     burying the content. */
+  const MOTES = mobile ? 220 : 620, moteColors = ['#b79cff', '#5f9573', '#82ba96', '#6fe0d0', '#f1c56b', '#f4f1ea', '#b86ee0'];
   const motePositions = new Float32Array(MOTES * 3), moteSeeds = new Float32Array(MOTES * 3), moteTints = new Float32Array(MOTES * 3);
   for (let i = 0; i < MOTES; i++) {
     // position = (orbit angle, height 0..1, radius factor); clustered like pollen.
@@ -726,7 +730,7 @@ window.createWashiStage = function createWashiStage(container, cards, requestRen
   const moteMaterial = new THREE.ShaderMaterial({
     transparent: true, depthWrite: false,
     uniforms: { uSpin: { value: 0 }, uRise: { value: 0 }, uTime: { value: 0 }, uSide: { value: 1 }, uOpacity: { value: 0 }, uGlitch: { value: 0 },
-      uCenter: { value: new THREE.Vector2() }, uRadius: { value: 300 }, uHeight: { value: 900 }, uPixelRatio: { value: renderer.getPixelRatio() } },
+      uCenter: { value: new THREE.Vector2() }, uRadius: { value: 300 }, uHeight: { value: 900 }, uPixelRatio: { value: renderer.getPixelRatio() * (mobile ? .62 : 1) } },
     vertexShader: `
       attribute vec3 aSeed; attribute vec3 aTint;
       uniform float uSpin, uRise, uTime, uSide, uOpacity, uRadius, uHeight, uPixelRatio, uGlitch; uniform vec2 uCenter;
